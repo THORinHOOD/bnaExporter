@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 
 import com.archimatetool.editor.model.IModelExporter;
+import com.archimatetool.editor.utils.FileUtils;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateModel;
@@ -44,6 +45,8 @@ public class MyExporter implements IModelExporter {
     
     FileOutputStream fos;
     ZipOutputStream zipOut;
+    
+    String ps = File.separatorChar + "";
     
     public MyExporter() {
     }
@@ -63,23 +66,46 @@ public class MyExporter implements IModelExporter {
     }
     
     private void writeModel(List<HLObject> modelObjects) throws IOException {
-    	File file = new File("org.example.mynetwork.cto");
-    	file.delete();
-    	byte[] buffer = new byte[1024];
-    	if (file.createNewFile()) {
-    		try (PrintWriter pw = new PrintWriter(file)) {
-	    		for (HLObject obj : modelObjects)
-	    			pw.println(obj.getHLView());
-	    	}
-
-			try (FileInputStream fis = new FileInputStream(file)) {
-				zipOut.putNextEntry(new ZipEntry(file.getName()));
-				int length;
-				while ((length = fis.read(buffer)) > 0)
-					zipOut.write(buffer, 0, length);
-				zipOut.closeEntry();
+    	File dir = new File("model");
+    	deleteDir(dir);
+    	if (dir.mkdir()) {
+			File file = new File(dir, "org.example.mynetwork.cto");
+			if (file.exists())
+				file.delete();
+			
+			byte[] buffer = new byte[1024];
+			if (file.createNewFile()) {
+				try (PrintWriter pw = new PrintWriter(file)) {
+		    		for (HLObject obj : modelObjects)
+		    			pw.println(obj.getHLView());
+		    	}
+		
+				try (FileInputStream fis = new FileInputStream(dir.getName() + ps + file.getName())) {
+					zipOut.putNextEntry(new ZipEntry(dir.getName() + ps + file.getName()));
+					int length;
+					while ((length = fis.read(buffer)) > 0)
+						zipOut.write(buffer, 0, length);
+					zipOut.closeEntry();
+				}
 			}
     	}
+    	
+    	deleteDir(dir);
+    }
+    
+    private static boolean deleteDir(File dir) {
+    	if (!dir.exists() || !dir.isDirectory())
+    		return dir.delete();
+    	
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            for (String child : children) {
+                if (!deleteDir(new File(dir, child)))
+                    return false;
+            }
+        }
+
+        return dir.delete(); // The directory is empty now and can be deleted.
     }
     
     private List<HLObject> getHLObjects(IFolder folder) {
