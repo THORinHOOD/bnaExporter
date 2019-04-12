@@ -9,5 +9,13 @@
             label="Model To BNA...">
       </exportHandler>
    </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="com.archimatetool.example.PropWindow"
+            id="com.archimatetool.example.PropWindow"
+            name="New ViewPart">
+      </view>
+   </extension>
 
 </plugin>

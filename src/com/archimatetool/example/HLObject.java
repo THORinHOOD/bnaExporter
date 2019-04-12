@@ -45,10 +45,7 @@ public abstract class HLObject {
 		
 		@Override
 		public String toString() {
-			if (isPrimitive(type))
-				return "o " + type + " " + name;
-			else
-				return "--> " + type + " " + name;
+			return "o " + type + " " + name;
 		}	
 	}
 }
