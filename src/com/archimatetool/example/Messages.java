@@ -13,7 +13,8 @@ public class Messages extends NLS {
 
     public static String MyExporter_0;
     public static String MyExporter_1;
-
+    public static String Wizard_Title; 
+    
     static {
         // initialize resource bundle
         NLS.initializeMessages(BUNDLE_NAME, Messages.class);

@@ -1,4 +1,4 @@
-package com.archimatetool.example;
+package com.archimatetool.example.window;
 
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
