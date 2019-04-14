@@ -1,15 +1,23 @@
 package com.archimatetool.example;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 
+import com.archimatetool.example.exc.DuplicateObjectNames;
+import com.archimatetool.example.exc.UnknownTypeException;
 import com.archimatetool.example.hl.Asset;
+import com.archimatetool.example.hl.HLField;
 import com.archimatetool.example.hl.HLModel;
 import com.archimatetool.example.hl.Participant;
 import com.archimatetool.example.hl.Transaction;
@@ -19,14 +27,19 @@ import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IFolder;
+import com.archimatetool.model.impl.AggregationRelationship;
+import com.archimatetool.model.impl.ArchimateRelationship;
 import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
+import com.archimatetool.model.impl.CompositionRelationship;
 
 public class BNAExporter {
 
     private IArchimateModel model; 
-    
+
+	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) || (x instanceof BusinessObject) || (x instanceof BusinessProcess);
+		
     public BNAExporter() {
     	
     }
@@ -35,47 +48,88 @@ public class BNAExporter {
     	this.model = model;
     }
         
-    public void export(Data data) throws IOException {
+    public void export(Data data) throws IOException, ParseException {
+	
     	Writer writer = new Writer(data);
 	    writer.start();
     	
-	    IFolder business = model.getFolder(FolderType.BUSINESS);
-		List<HLModel> models = getModels(business);
+	    IFolder businessFolder = model.getFolder(FolderType.BUSINESS);
+	    IFolder relationsFolder = model.getFolder(FolderType.RELATIONS);
+	    
+	    Map<String, HLModel> models = getModels(businessFolder);
+		List<ArchimateRelationship> relations = getModelRelations(relationsFolder);
+		models = acceptRelations(models, relations);
 		
-		writer.writeModels(models);
+		checkModels(models.values());
+		
+		writer.writeModels(models.values());
 	    writer.writeReadme();
-		
+	    
 		writer.close();
     }
-    
-    private <T> T getOnly(List<T> list, Predicate<? super T> predicate) {
-    	List<T> objs = list.stream().filter(predicate).collect(Collectors.toList());
-    	if (objs.size() != 1)
-    		throw new IllegalArgumentException("In this list can't find only one object");
-		return objs.get(0);
+        
+    private void checkModels(Collection<HLModel> models) {
+    	Set<String> names = new HashSet<>();
+    	for (HLModel model : models) {
+    		if (names.contains(model.getName())) {
+    			throw new DuplicateObjectNames(model.getName());
+    		} else {
+    			names.add(model.getName());
+    		}
+    	}
+    	
+    	for (HLModel model : models) {
+    		for (HLField field : model.getFields()) {
+    			if (!field.isPrimitive() && !names.contains(field.getType())) {
+    				throw new UnknownTypeException(model, field);
+    			}
+    		}
+    	}
     }
     
-    private IFolder getViews(IArchimateModel model) {
-    	List<IFolder> folders = model.getFolders().stream().filter(folder -> folder.getName().equals("Views")).collect(Collectors.toList());
-    	if (folders.size() != 1)
-    		throw new IllegalArgumentException("Must be 1 \"Views\"");
-    	return folders.get(0);
+    private Map<String, HLModel> acceptRelations(Map<String, HLModel> models, List<ArchimateRelationship> relations) {
+    	for (ArchimateRelationship relation : relations) {
+    		HLModel source = models.get(relation.getSource().getId());
+			HLModel target = models.get(relation.getTarget().getId());
+			
+    		if (relation instanceof CompositionRelationship) {
+    			HLField field = HLField.createField(source, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY);
+    			source.addField(field);
+    		} else if (relation instanceof AggregationRelationship) {
+    			HLField field = HLField.createField(source, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER);
+    			source.addField(field);
+    		}
+    	}
+    	    	
+    	return models;
     }
     
-    private List<HLModel> getModels(IFolder folder) {
+    private List<ArchimateRelationship> getModelRelations(IFolder folder) {
+    	return folder.getElements().stream()
+    		.filter(x -> x instanceof ArchimateRelationship)
+    		.map(x -> (ArchimateRelationship) x)
+    		.filter(x -> isModel.test(x.getSource()) && isModel.test(x.getTarget()))
+    		.collect(Collectors.toList());
+    }
+    
+    private Map<String, HLModel> getModels(IFolder folder) {
     	List<EObject> list = new ArrayList<EObject>();
     	getElements(folder, list);
     	
-    	Predicate<EObject> isModel = x -> (x instanceof BusinessRole) || (x instanceof BusinessObject) || (x instanceof BusinessProcess);
     	
     	Function<IArchimateConcept, HLModel> getModel = x -> {
-    		if (x instanceof BusinessRole) {
-    			return new Participant(x);
-    		} else if (x instanceof BusinessObject) {
-    			return new Asset(x);
-    		} else if (x instanceof BusinessProcess) {
-    			return new Transaction(x);
+    		try {
+	    		if (x instanceof BusinessRole) {
+	    			return new Participant(x);
+	    		} else if (x instanceof BusinessObject) {
+	    			return new Asset(x);
+	    		} else if (x instanceof BusinessProcess) {
+	    			return new Transaction(x);
+	    		}
+    		} catch(ParseException ex) {
+    			System.out.println(ex.getMessage());
     		}
+    		
     		return null;
     	};
     	
@@ -83,20 +137,9 @@ public class BNAExporter {
     			.map(x -> (IArchimateConcept) x)
 				.filter(isModel)
 				.map(getModel)
-				.collect(Collectors.toList());			
+				.collect(Collectors.toMap(x -> x.getID(), x -> x));			
     }
-    
-    private List<Participant> getParticipants(IFolder folder) {
-        List<EObject> list = new ArrayList<EObject>();
         
-        getElements(folder, list);
-        
-        return list.stream()
-				.filter(x -> (IArchimateConcept) x instanceof BusinessRole)
-				.map(x -> new Participant((BusinessRole)((IArchimateConcept)x)))
-				.collect(Collectors.toList());
-    }
-    
     private void getElements(IFolder folder, List<EObject> list) {
         for(EObject object : folder.getElements()) {
             list.add(object);

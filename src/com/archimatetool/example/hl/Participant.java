@@ -1,5 +1,6 @@
 package com.archimatetool.example.hl;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,8 +9,8 @@ import com.archimatetool.model.IProperty;
 
 public class Participant extends HLModel {
 	
-	public Participant(IArchimateConcept concept) {
-		super(concept, HLModel.HLModelType.PARTICIPANT);
+	public Participant(IArchimateConcept concept) throws ParseException {
+		super(concept, HLModel.HLModelType.PARTICIPANT, true);
 	}
 	
 }

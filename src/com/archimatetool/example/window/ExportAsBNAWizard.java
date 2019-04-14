@@ -1,13 +1,17 @@
 package com.archimatetool.example.window;
 
 import java.io.IOException;
+import java.text.ParseException;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.Wizard;
 
 import com.archimatetool.example.BNAExporter;
+import com.archimatetool.example.exc.DuplicateObjectNames;
+import com.archimatetool.example.exc.NotAppropriateFieldName;
+import com.archimatetool.example.exc.UnknownTypeException;
 import com.archimatetool.example.utils.Data;
-
-import static com.archimatetool.example.window.ExportAsBNAPage.Field;
+import com.archimatetool.example.window.ExportAsBNAPage.Field;
 
 public class ExportAsBNAWizard extends Wizard {
 
@@ -30,12 +34,12 @@ public class ExportAsBNAWizard extends Wizard {
 		
 		try {
 			exporter.export(data);
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
+		} catch (IOException | ParseException | DuplicateObjectNames | NotAppropriateFieldName | UnknownTypeException e) {
+			showError("Can't export BNA", e.getMessage());
 			return false;
 		}
 		
-		System.out.println("finish");
+		showConfirm("Successfully", "BNA was exported");
 		return true;
 	}
 	
@@ -44,5 +48,22 @@ public class ExportAsBNAWizard extends Wizard {
         fPage = new ExportAsBNAPage();
         addPage(fPage);
     }
+	
+	private void showError(String title, String message) {
+		getShell().getDisplay().asyncExec
+	    (new Runnable() {
+	        public void run() {
+	            MessageDialog.openWarning(getShell(), title, message);
+	        }
+	    });
+	}
 
+	private void showConfirm(String title, String message) {
+		getShell().getDisplay().asyncExec
+	    (new Runnable() {
+	        public void run() {
+	            MessageDialog.openConfirm(getShell(), title, message);
+	        }
+	    });
+	}
 }

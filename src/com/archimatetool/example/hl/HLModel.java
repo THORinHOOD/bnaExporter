@@ -1,5 +1,6 @@
 package com.archimatetool.example.hl;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,43 +18,84 @@ public abstract class HLModel extends HLObject {
 		}
 	}
 	
-	private final String header = "%s %s identified by %s";
-	private final String content = "{\n%s}";
+	private final String HEADER = "%s %s";
+	private final String IDENTIFIED_BY = "identified by %s";
+	private final String CONTENT = "{\n%s}";
+	
 	protected HLModelType type;
 	
 	protected String documentation;
 	protected String name;
-	protected List<HLProp> properties;
+	protected List<HLField> fields;
 	
-	public HLModel(IArchimateConcept concept, HLModelType type) {
+	protected boolean hasParent = false;
+	
+	protected boolean hasId = true;
+	protected HLField idField = null;
+		
+	public HLModel(IArchimateConcept concept, HLModelType type, boolean hasId) throws ParseException {
+		
+		super(concept.getId());
+		
 		this.type = type;
+		this.hasId = hasId;
 		name = concept.getName();
 		
-		properties = new ArrayList<HLProp>();
-		properties.add(new HLProp("String", name.toLowerCase() + "Id"));
+		fields = new ArrayList<HLField>();
 		for (IProperty prop : concept.getProperties())
-			properties.add(new HLProp(prop));
+			fields.add(HLField.createField(this, prop, HLField.Type.PROPERTY));
+		
+		if (this.hasId)
+			makeIdProp();
 		
 		documentation = concept.getDocumentation();
+		
+	}
+	
+	protected void makeIdProp() throws ParseException {
+		for (int i = 0; i < fields.size(); i++) {
+			HLField field = fields.get(i);
+			if (field.isIdentifiedByThis()) {
+				if (idField == null) {
+					idField = field;
+				} else {
+					throw new ParseException("Object id should be one : " + name, i);
+				}
+			}
+		}
+		
+		if (idField == null) {
+			HLField field = HLField.createField(this, "String", name.toLowerCase() + "Id", HLField.Type.PROPERTY); 
+			fields.add(field);
+			idField = fields.get(fields.size() - 1);
+		}
 	}
 	
 	public String getName() {
 		return name;
 	}
 	
-	public List<HLProp> getProperties() {
-		return properties;
+	public List<HLField> getFields() {
+		return fields;
+	}
+	
+	public void addField(HLField field) {
+		fields.add(field);
 	}
 	
 	@Override
 	public String getHLView() {
 		String name = getName();
-		String id = getName().toLowerCase() + "Id";
 		String fields = "";
-		for (HLProp prop : properties)
-			fields += "\t" + prop.toString() + "\n"; 
+	
+		for (HLField field : this.fields) {
+			fields += "\t" + field.toString() + "\n";
+		}
 		
-		String result = String.format(header, type.toString(), name, id) + "\n" + String.format(content, fields);
+		String result = String.format(HEADER, type.toString(), name);
+		if (hasId)
+			result += " " + String.format(IDENTIFIED_BY, idField.getName());
+		result += "\n" + String.format(CONTENT, fields);
 		
 		if ((documentation != null) && (!documentation.trim().equals(""))) {
 			String hlDocumentation = "/**\n";

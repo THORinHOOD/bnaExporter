@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -51,7 +53,7 @@ public class Writer {
 			file.delete();
 	}
 	
-	public void writeModels(List<? extends HLObject> modelObjects) throws IOException {
+	public void writeModels(Collection<? extends HLObject> modelObjects) throws IOException, ParseException {
     	File dir = new File("models");
     	deleteDir(dir);
     	if (dir.mkdir()) {
