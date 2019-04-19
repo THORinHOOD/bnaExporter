@@ -1,7 +1,7 @@
 package com.archimatetool.example.exc;
 
-import com.archimatetool.example.hl.HLField;
-import com.archimatetool.example.hl.HLModel;
+import com.archimatetool.example.hl.models.HLField;
+import com.archimatetool.example.hl.models.HLModel;
 
 public class UnknownTypeException extends IllegalArgumentException {
 	

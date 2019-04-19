@@ -1,6 +1,4 @@
-package com.archimatetool.example.hl;
-
-import java.text.ParseException;
+package com.archimatetool.example.hl.models;
 
 public abstract class HLObject {
 	
@@ -15,5 +13,6 @@ public abstract class HLObject {
 	}
 	
 	public abstract String getHLView();
+	
 }
 

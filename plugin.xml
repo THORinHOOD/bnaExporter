@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+
+
    <extension
          point="com.archimatetool.editor.exportHandler">
       <exportHandler
@@ -9,13 +11,44 @@
             label="Model To BNA...">
       </exportHandler>
    </extension>
+   
+   
    <extension
-         point="org.eclipse.ui.views">
-      <view
-            class="com.archimatetool.example.PropWindow"
-            id="com.archimatetool.example.PropWindow"
-            name="New ViewPart">
-      </view>
+         point="org.eclipse.ui.commands">
+      <command
+            defaultHandler="com.asgar.myexport.js.SampleHandler"
+            id="com.asgar.myexport.commands.sampleCommand"
+            name="Toogle JS Editor">
+      </command>
+   </extension>
+         
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="com.asgar.myexport.toolbars.sampleToolbar">
+            <command
+                  commandId="com.asgar.myexport.commands.sampleCommand"
+                  icon="icons/icon.png"
+                  id="com.asgar.myexport.toolbars.sampleCommand">
+            </command>
+         </toolbar>
+      </menuContribution>
    </extension>
 
+
+	<extension
+	     point="org.eclipse.ui.views">
+	  <view
+	        class="com.asgar.myexport.js.JSEditorView"
+	        icon="icons/icon.png"
+	        id="com.asgar.myexport.views.JSEditorView"
+	        name="JS Editor"
+	        restorable="true">
+	  </view>
+	</extension>
+
+  
+	
 </plugin>

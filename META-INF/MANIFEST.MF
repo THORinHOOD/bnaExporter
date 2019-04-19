@@ -9,3 +9,4 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.core.runtime,
  com.archimatetool.editor
 Automatic-Module-Name: com.archimatetool.importexportexample
+Import-Package: org.eclipse.help

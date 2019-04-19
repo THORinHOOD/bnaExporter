@@ -1,4 +1,4 @@
-package com.archimatetool.example.hl;
+package com.archimatetool.example.hl.models;
 
 import java.text.ParseException;
 import java.util.ArrayList;

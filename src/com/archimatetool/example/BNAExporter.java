@@ -14,13 +14,14 @@ import java.util.stream.Collectors;
 
 import org.eclipse.emf.ecore.EObject;
 
+import com.archimatetool.editor.Logger;
 import com.archimatetool.example.exc.DuplicateObjectNames;
 import com.archimatetool.example.exc.UnknownTypeException;
-import com.archimatetool.example.hl.Asset;
-import com.archimatetool.example.hl.HLField;
-import com.archimatetool.example.hl.HLModel;
-import com.archimatetool.example.hl.Participant;
-import com.archimatetool.example.hl.Transaction;
+import com.archimatetool.example.hl.models.Asset;
+import com.archimatetool.example.hl.models.HLField;
+import com.archimatetool.example.hl.models.HLModel;
+import com.archimatetool.example.hl.models.Participant;
+import com.archimatetool.example.hl.models.Transaction;
 import com.archimatetool.example.utils.Data;
 import com.archimatetool.example.utils.Writer;
 import com.archimatetool.model.FolderType;
@@ -40,31 +41,51 @@ public class BNAExporter {
 
 	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) || (x instanceof BusinessObject) || (x instanceof BusinessProcess);
 		
+	private enum Folder {
+		BUSINESS, RELATIONS, SCRIPTS;
+		
+		private IFolder folder;
+		
+		public void setFolder(IFolder folder) {
+			this.folder = folder;
+		}
+		
+		public List<EObject> getElements() {
+			return folder.getElements();
+		}
+	}
+		
     public BNAExporter() {
     	
     }
     
     public BNAExporter(IArchimateModel model) {
     	this.model = model;
+    	Folder.BUSINESS.setFolder(this.model.getFolder(FolderType.BUSINESS));
+    	Folder.RELATIONS.setFolder(this.model.getFolder(FolderType.BUSINESS));
+    	//Folder.SCRIPTS.setFolder(this.model.getFolder());
     }
         
     public void export(Data data) throws IOException, ParseException {
-	
+    	IFolder businessFolder = model.getFolder(FolderType.BUSINESS);
+ 	    IFolder relationsFolder = model.getFolder(FolderType.RELATIONS);
+ 	    
+ 	    Map<String, HLModel> models = getModels(businessFolder);
+ 		List<ArchimateRelationship> relations = getModelRelations(relationsFolder);
+ 		models = acceptRelations(models, relations);
+ 		
+ 		checkModels(models.values());
+    	writeBNA(data, models);
+    }
+    
+    private void writeBNA(Data data, Map<String, HLModel> models) throws IOException, ParseException {
     	Writer writer = new Writer(data);
 	    writer.start();
     	
-	    IFolder businessFolder = model.getFolder(FolderType.BUSINESS);
-	    IFolder relationsFolder = model.getFolder(FolderType.RELATIONS);
-	    
-	    Map<String, HLModel> models = getModels(businessFolder);
-		List<ArchimateRelationship> relations = getModelRelations(relationsFolder);
-		models = acceptRelations(models, relations);
-		
-		checkModels(models.values());
-		
 		writer.writeModels(models.values());
-	    writer.writeReadme();
-	    
+	    writer.writeScripts(models.values().stream().filter(x -> x instanceof Transaction).map(x -> (Transaction) x).collect(Collectors.toList()));
+		writer.writeReadme();
+
 		writer.close();
     }
         
@@ -80,7 +101,9 @@ public class BNAExporter {
     	
     	for (HLModel model : models) {
     		for (HLField field : model.getFields()) {
-    			if (!field.isPrimitive() && !names.contains(field.getType())) {
+    			if (!field.isPrimitive() && 
+    					!names.contains(field.getType()) && 
+    					!(field.getType().endsWith("[]") && names.contains(field.getType().substring(0, field.getType().length() - 2)))) {
     				throw new UnknownTypeException(model, field);
     			}
     		}
@@ -115,7 +138,6 @@ public class BNAExporter {
     private Map<String, HLModel> getModels(IFolder folder) {
     	List<EObject> list = new ArrayList<EObject>();
     	getElements(folder, list);
-    	
     	
     	Function<IArchimateConcept, HLModel> getModel = x -> {
     		try {

@@ -44,8 +44,6 @@ import com.archimatetool.model.impl.BusinessRole;
 
 public class MyExporter implements IModelExporter {
     
-
-
     public MyExporter() {
     }
         
@@ -60,5 +58,4 @@ public class MyExporter implements IModelExporter {
         dialog.open();
     }
     
-
 }

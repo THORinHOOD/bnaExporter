@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -18,7 +19,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 
 import com.archimatetool.example.Messages;
-import com.archimatetool.example.hl.HLObject;
+import com.archimatetool.example.hl.models.HLObject;
+import com.archimatetool.example.hl.models.Transaction;
 
 public class Writer {
 	
@@ -53,11 +55,28 @@ public class Writer {
 			file.delete();
 	}
 	
+	public void writeScripts(List<Transaction> transactions) throws IOException {
+		File dir = new File("lib");
+		deleteDir(dir);
+		if (dir.mkdir()) {
+			File file = new File(dir, "script.js");
+			
+			if (file.exists())
+				file.delete();
+			
+			if (file.createNewFile()) {
+				writeFile(file, dir.getName() + ps + file.getName(), Arrays.asList(ScriptsHandler.getScriptFile(transactions).split("\n")));
+			}
+		}
+		deleteDir(dir);
+	}
+	
+	
 	public void writeModels(Collection<? extends HLObject> modelObjects) throws IOException, ParseException {
     	File dir = new File("models");
     	deleteDir(dir);
     	if (dir.mkdir()) {
-			File file = new File(dir, data.getStringValue(Data.NAMESPACE) + ".cto");
+			File file = new File(dir, data.getStringValue(Data.BUSINESS_NETWORK_NAME) + ".cto");
 			
 			if (file.exists())
 				file.delete();
@@ -75,7 +94,7 @@ public class Writer {
     	deleteDir(dir);
     }
 	
-	private void writeFile(File file, String pathInZip,  List<String> lines) throws IOException {
+	private void writeFile(File file, String pathInZip, List<String> lines) throws IOException {
 		byte[] buffer = new byte[1024];
 		
 		try (PrintWriter pw = new PrintWriter(file)) {
