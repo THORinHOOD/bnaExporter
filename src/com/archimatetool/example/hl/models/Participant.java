@@ -9,8 +9,8 @@ import com.archimatetool.model.IProperty;
 
 public class Participant extends HLModel {
 	
-	public Participant(IArchimateConcept concept) throws ParseException {
-		super(concept, HLModel.HLModelType.PARTICIPANT, true);
+	public Participant(IArchimateConcept concept, String namespace) throws ParseException {
+		super(concept, HLModel.HLModelType.PARTICIPANT, namespace, true);
 	}
 	
 }

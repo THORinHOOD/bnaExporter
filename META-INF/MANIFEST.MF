@@ -10,3 +10,5 @@ Require-Bundle: org.eclipse.ui,
  com.archimatetool.editor
 Automatic-Module-Name: com.archimatetool.importexportexample
 Import-Package: org.eclipse.help
+Bundle-ClassPath: lib/json-20180813.jar,
+ .

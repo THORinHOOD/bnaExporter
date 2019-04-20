@@ -2,22 +2,17 @@ package com.archimatetool.example.window;
 
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.PlatformUI;
 
-import com.archimatetool.editor.ui.UIUtils;
+import com.archimatetool.model.IArchimateModel;
+import com.archimatetool.model.IProperty;
 
 public class ExportAsBNAPage extends WizardPage {
+
 	public enum Field {
 		BUSINESS_NETWORK_NAME("Business network name"),
 		DESCRIPTION("Description"),
@@ -42,6 +37,10 @@ public class ExportAsBNAPage extends WizardPage {
 			this.input = input;
 		}
 		
+		public void setText(String text) {
+			this.input.setText(text);
+		}
+		
 		public String getValue() {
 			if (input != null)
 				return input.getText();
@@ -49,12 +48,15 @@ public class ExportAsBNAPage extends WizardPage {
 		}
 	};
 	
-	public ExportAsBNAPage() {
-		this("ExportAsBNAWizard");
+	private IArchimateModel model;
+	
+	public ExportAsBNAPage(IArchimateModel model) {
+		this("ExportAsBNAWizard", model);
 	}
 	
-	protected ExportAsBNAPage(String pageName) {
+	protected ExportAsBNAPage(String pageName, IArchimateModel model) {
 		super(pageName);
+		this.model = model;
 	}
 
 	@Override
@@ -65,13 +67,30 @@ public class ExportAsBNAPage extends WizardPage {
         
         GridData gd = new GridData();
         gd.widthHint = 500;
-        gd.horizontalSpan = 2;
-        
         
         for (Field field : Field.values()) {
         	addField(container, gd, field);
         }
-
+        
+        Field.BUSINESS_NETWORK_NAME.setText(model.getName());
+        Field.DESCRIPTION.setText(model.getPurpose());
+        
+        for (IProperty prop : model.getProperties()) {
+        	String key = prop.getKey().toLowerCase().trim();
+        	String value = prop.getValue().replaceAll(" ", "");
+        	if (key.equals("namespace")) {
+        		Field.NAMESPACE.setText(value);
+        	} else if (key.equals("author") || key.equals("author name") || key.equals("author_name")) {
+        		Field.AUTHOR_NAME.setText(value);
+        	} else if (key.equals("email") || key.equals("author email") || key.equals("author_email")) {
+        		Field.AUTHOR_EMAIL.setText(value);
+        	} else if (key.equals("license")) {
+        		Field.LICENSE.setText(value);
+        	}
+        }
+        
+        
+        setTitle("Export BNA");
 	}
 	
 	private void addField(Composite container, GridData gd, Field field) {

@@ -2,7 +2,6 @@
 <?eclipse version="3.4"?>
 <plugin>
 
-
    <extension
          point="com.archimatetool.editor.exportHandler">
       <exportHandler
@@ -11,7 +10,6 @@
             label="Model To BNA...">
       </exportHandler>
    </extension>
-   
    
    <extension
          point="org.eclipse.ui.commands">
@@ -37,7 +35,6 @@
       </menuContribution>
    </extension>
 
-
 	<extension
 	     point="org.eclipse.ui.views">
 	  <view
@@ -49,6 +46,4 @@
 	  </view>
 	</extension>
 
-  
-	
 </plugin>

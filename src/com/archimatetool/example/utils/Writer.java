@@ -17,10 +17,13 @@ import java.util.zip.ZipOutputStream;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.archimatetool.example.Messages;
 import com.archimatetool.example.hl.models.HLObject;
 import com.archimatetool.example.hl.models.Transaction;
+import com.archimatetool.example.hl.pcl.HLPermRule;
 
 public class Writer {
 	
@@ -55,11 +58,79 @@ public class Writer {
 			file.delete();
 	}
 	
+	
+	public void writePackageJSON() throws IOException {
+		File file = new File("package.json");
+		
+		if (file.exists())
+			file.delete();
+		
+		if (file.createNewFile()) {
+			JSONObject composer = new JSONObject()
+									.put("composer", "^0.19.20");
+			JSONObject scripts = new JSONObject()
+									.put("prepublish", "mkdirp ./dist && composer archive create --sourceType dir --sourceName . -a ./dist/tutorial-network.bna")
+									.put("pretest", "npm run lint")
+									.put("lint", "eslint .")
+									.put("test", "nyc mocha -t 0 test/*.js && cucumber-js");
+			JSONObject devDependencies = new JSONObject()
+									.put("composer-admin","^0.19.20")
+									.put("composer-cli","^0.19.20")
+									.put("composer-client","^0.19.20")
+									.put("composer-common","^0.19.20")
+									.put("composer-connector-embedded","^0.19.20")
+									.put("composer-cucumber-steps","^0.19.20")
+									.put("chai","latest")
+									.put("chai-as-promised","latest")
+									.put("cucumber","^2.2.0")
+									.put("eslint","latest")
+									.put("nyc","latest")
+									.put("mkdirp","latest")
+									.put("mocha","latest");
+			
+			JSONObject packageJson= new JSONObject()
+									.put("engines", composer)
+									.put("name", data.getStringValue(Data.BUSINESS_NETWORK_NAME))
+									.put("version", "0.0.1")
+									.put("description", data.getStringValue(Data.DESCRIPTION))
+									.put("scripts", scripts)
+									.put("keywords", new JSONArray().put("composer").put("composer-network"))
+									.put("author", data.getStringValue(Data.AUTHOR_NAME))
+									.put("email", data.getStringValue(Data.AUTHOR_EMAIL))
+									.put("license", data.getStringValue(Data.LICENSE))
+									.put("devDependencies", devDependencies);
+						
+			ArrayList<String> lines = new ArrayList<String>();
+			lines.add(packageJson.toString());
+			writeFile(file, file.getName(), lines);
+		}
+		
+		if (file.exists())
+			file.delete();
+	}
+	
+	public void writePermissions(List<HLPermRule> rules) throws IOException {
+		File file = new File("permissions.acl");
+		
+		if (file.exists())
+			file.delete();
+		
+		if (file.createNewFile()) {
+			ArrayList<String> lines = new ArrayList<String>();
+			for (HLPermRule rule : rules)
+				lines.add(rule.getHLView() + "\n");
+			writeFile(file, file.getName(), lines);
+		}
+		
+		if (file.exists())
+			file.delete();
+	}
+	
 	public void writeScripts(List<Transaction> transactions) throws IOException {
 		File dir = new File("lib");
 		deleteDir(dir);
 		if (dir.mkdir()) {
-			File file = new File(dir, "script.js");
+			File file = new File(dir, "logic.js");
 			
 			if (file.exists())
 				file.delete();
@@ -76,7 +147,7 @@ public class Writer {
     	File dir = new File("models");
     	deleteDir(dir);
     	if (dir.mkdir()) {
-			File file = new File(dir, data.getStringValue(Data.BUSINESS_NETWORK_NAME) + ".cto");
+			File file = new File(dir, data.getStringValue(Data.NAMESPACE) + ".cto");
 			
 			if (file.exists())
 				file.delete();

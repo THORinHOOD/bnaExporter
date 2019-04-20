@@ -26,17 +26,18 @@ public abstract class HLModel extends HLObject {
 	
 	protected String documentation;
 	protected String name;
+	protected String namespace;
 	protected List<HLField> fields;
 	
 	protected boolean hasParent = false;
 	
 	protected boolean hasId = true;
 	protected HLField idField = null;
-		
-	public HLModel(IArchimateConcept concept, HLModelType type, boolean hasId) throws ParseException {
+	
+	public HLModel(IArchimateConcept concept, HLModelType type, String namespace, boolean hasId) throws ParseException {
 		
 		super(concept.getId());
-		
+		this.namespace = namespace;
 		this.type = type;
 		this.hasId = hasId;
 		name = concept.getName();
@@ -59,7 +60,7 @@ public abstract class HLModel extends HLObject {
 				if (idField == null) {
 					idField = field;
 				} else {
-					throw new ParseException("Object id should be one : " + name, i);
+					throw new ParseException("Id field should be one : " + name, i);
 				}
 			}
 		}
@@ -73,6 +74,10 @@ public abstract class HLModel extends HLObject {
 	
 	public String getName() {
 		return name;
+	}
+	
+	public String getPackage() {
+		return namespace + "." + name;
 	}
 	
 	public List<HLField> getFields() {

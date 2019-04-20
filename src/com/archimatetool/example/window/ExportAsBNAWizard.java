@@ -7,9 +7,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.wizard.Wizard;
 
 import com.archimatetool.example.BNAExporter;
-import com.archimatetool.example.exc.DuplicateObjectNames;
-import com.archimatetool.example.exc.NotAppropriateFieldName;
-import com.archimatetool.example.exc.UnknownTypeException;
 import com.archimatetool.example.utils.Data;
 import com.archimatetool.example.window.ExportAsBNAPage.Field;
 
@@ -30,22 +27,25 @@ public class ExportAsBNAWizard extends Wizard {
 		data = data
 			.addValue(Data.NAMESPACE, Field.NAMESPACE.getValue())
 			.addValue(Data.BUSINESS_NETWORK_NAME, Field.BUSINESS_NETWORK_NAME.getValue())
-			.addValue(Data.DESCRIPTION, Field.DESCRIPTION.getValue());
+			.addValue(Data.DESCRIPTION, Field.DESCRIPTION.getValue())
+			.addValue(Data.AUTHOR_EMAIL, Field.AUTHOR_EMAIL.getValue())
+			.addValue(Data.AUTHOR_NAME, Field.AUTHOR_NAME.getValue())
+			.addValue(Data.LICENSE, Field.LICENSE.getValue());
 		
 		try {
 			exporter.export(data);
-		} catch (IOException | ParseException | DuplicateObjectNames | NotAppropriateFieldName | UnknownTypeException e) {
+		} catch (IOException | IllegalArgumentException | ParseException e) {
 			showError("Can't export BNA", e.getMessage());
 			return false;
 		}
 		
-		showConfirm("Successfully", "BNA was exported");
+		showConfirm("Successfully", "BNA have exported");
 		return true;
 	}
 	
 	@Override
     public void addPages() {
-        fPage = new ExportAsBNAPage();
+        fPage = new ExportAsBNAPage(exporter.getModel());
         addPage(fPage);
     }
 	
