@@ -1,94 +1,90 @@
 package com.asgar.myexport.js;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.ToolBar;
+import org.eclipse.swt.widgets.ToolItem;
 import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
 import com.archimatetool.example.utils.ScriptsHandler;
-import com.archimatetool.exmaple.hl.scripts.HLProcess;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateConcept;
+import com.archimatetool.model.IArchimateFactory;
 import com.archimatetool.model.IArchimateModel;
+import com.archimatetool.model.IMetadata;
+import com.archimatetool.model.IProperty;
+import com.archimatetool.model.impl.ArchimateFactory;
 import com.archimatetool.model.impl.BusinessProcess;
 
 public class JSEditorView extends ViewPart implements ISelectionListener {
 	
 	public static String ID = "com.asgar.myexport.views.JSEditorView";
 	
-	private BusinessProcess currentProcess;
 	private IArchimateModel currentModel;
-	private List<BusinessProcess> currentModelBP;
 	
-	private StyledText text;
-	private Combo combo;
 	private Composite parent;
+	
+	private JSEditorLinkButton linkButton;
+	private JSEditor editor;
+	private JSEditorCombo combo;
+	private JSEditorMenu menu;
 	
 	private IPropertyListener propChanged = new IPropertyListener() {
 		@Override
 		public void propertyChanged(Object source, int propId) {
-			if (currentProcess != null && combo != null)
-				updateCombo();
+			if (combo != null)
+				combo.updateBPList();
 		}
 	};
-	
-	public JSEditorView() {
-	
-	}
 	
 	@Override
 	public void createPartControl(Composite parent) {
 		this.parent = parent;
+	
+		initLayout(parent);
+		menu = new JSEditorMenu(this);
+		combo = new JSEditorCombo(this);
+		linkButton = new JSEditorLinkButton(this);
+		editor = new JSEditor(this);
 		
+		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(this);	
+	}
+
+	private void initLayout(Composite parent) {
 		GridLayout layout = new GridLayout();
-		layout.numColumns = 1;
+		layout.numColumns = 2;
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		parent.setLayout(layout);
-		parent.setLayoutData(gridData);
-		
-		combo = new Combo(parent, SWT.BORDER | SWT.READ_ONLY );
-		combo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-		
-		combo.addListener(SWT.Selection, new Listener() {
-	         @Override
-	         public void handleEvent(Event e) {
-	        	currentProcess = currentModelBP.get(combo.getSelectionIndex());
-            	choosedBP();
-	         }
-	     });
-		
-		
-		text = new StyledText(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		gridData = new GridData(GridData.FILL_BOTH);
-		text.setLayoutData(gridData);
-		text.setEditable(false);
-		
-        
-		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(this);
-		
-		text.addModifyListener(new ModifyListener() {
-			@Override
-			public void modifyText(ModifyEvent e) {
-				if (currentProcess != null) {
-					ScriptsHandler.getProcess(currentProcess.getId()).setCode(text.getText());
-				}
-			}
-		});		
+		parent.setLayoutData(gridData);		
 	}
 	
     @Override
@@ -97,80 +93,88 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
     		return;
     	}
     	
-        if(selection instanceof IStructuredSelection && !selection.isEmpty()) {
-            IStructuredSelection struct = (IStructuredSelection) selection;
-            Object object = struct.getFirstElement();
-            IArchimateConcept concept = null;
-            
-            if(object instanceof IArchimateConcept) {
-                concept = (IArchimateConcept) object;
-            } else if (object instanceof IAdaptable) {
-                concept = ((IAdaptable)object).getAdapter(IArchimateConcept.class);
-            }
-            
-            if (concept instanceof BusinessProcess) {
-	            boolean update = (currentProcess == null) || !currentProcess.getId().equals(concept.getId());
-	            currentProcess = (BusinessProcess) concept;
-	            if (update) {
-	            	choosedBP();
-	            	part.removePropertyListener(propChanged);
-	            	part.addPropertyListener(propChanged);
-	            	currentModel = currentProcess.getArchimateModel();
-	            	if (combo != null) {
-	            		updateCombo();
-	            	}
-	            }
-	            
-	            return;
-            }
-        }
-        
+    	IArchimateModel choosed = part.getAdapter(IArchimateModel.class);
+    	
+    	if (choosed != null && (choosed != currentModel))  {
+    		currentModel = choosed;
+    		combo.updateBPList();
+    	} else if (choosed != null) {
+    		combo.updateBPList();
+    	}
+    	
+		if(selection instanceof IStructuredSelection && !selection.isEmpty()) {
+			
+		    IStructuredSelection struct = (IStructuredSelection) selection;
+		    Object object = struct.getFirstElement();
+		    IArchimateConcept concept = null;
+		    
+		    if(object instanceof IArchimateConcept) {
+		        concept = (IArchimateConcept) object;
+		    } else if (object instanceof IAdaptable) {
+		        concept = ((IAdaptable)object).getAdapter(IArchimateConcept.class);
+		    }
+		    
+		    if (concept instanceof BusinessProcess) {
+		    	combo.selectBP((BusinessProcess) concept);
+		       
+			    part.removePropertyListener(propChanged);
+			    part.addPropertyListener(propChanged);
+		       
+		        editor.updateScript(findScript(combo.getSelectedBP()));
+		    }
+		}
+		
+		combo.updateBPList();
     }
 
-    private void updateCombo() {
-    	currentModelBP = currentModel.getFolder(FolderType.BUSINESS).getElements()
+    public File findScript(BusinessProcess process) {
+    	File script = null;
+    	if (currentModel != null && process != null) {
+    		Optional<IProperty> prop = currentModel.getMetadata().getEntries()
     			.stream()
-    			.filter(x -> x instanceof BusinessProcess)
-    			.map(x -> (BusinessProcess) x)
-    			.collect(Collectors.toList());
-		List<String> names = currentModelBP.stream()
-							.map(x -> x.getName())
-							.collect(Collectors.toList());
-		combo.setItems(names.toArray(new String[names.size()]));
-		
-		int index;
-		for (index = 0; index < currentModelBP.size(); index++) {
-			if (currentModelBP.get(index).getId().equals(currentProcess.getId())) {
-				combo.select(index);
-				return;
-			}
-		}
-		combo.select(0);
+    			.filter(x -> x.getKey().equals(process.getId()))
+    			.findFirst();
+    		
+    		if (prop.isPresent())
+    			script = new File(prop.get().getValue());
+    		else 
+    			script = null;
+    	}
+    	
+    	return script;
     }
     
 	@Override
 	public void setFocus() {
-		if (text != null) {
-			text.setFocus();
-		}
+		editor.setFocus();
+	}
+			
+	public void showError(String title, String message) {
+		parent.getShell().getDisplay().asyncExec
+	    (new Runnable() {
+	        public void run() {
+	            MessageDialog.openWarning(parent.getShell(), title, message);
+	        }
+	    });
 	}
 	
-	private void choosedBP() {
-		String id = currentProcess.getId();
-    	if (!ScriptsHandler.processExist(id))
-    		ScriptsHandler.addProcess(new HLProcess(currentProcess));
-    	
-    	text.setEditable(true);
-    	text.setEnabled(true);
-    	text.setText(ScriptsHandler.getProcess(id).getHLView());
-    }
-	
-	private void unchoosedBP() {
-		currentProcess = null;
-		text.setEditable(false);
-		text.setEnabled(false);
-		text.setText("");
-		setTitle("...");
+	public Composite getParent() {
+		return parent;
 	}
 	
+	public void setScriptTitle(String title) {
+		setTitle(title);
+	}
+	
+	public BusinessProcess getSelectedBP() {
+		return combo.getSelectedBP();
+	}
+	
+	public JSEditor getEditor() {
+		return editor;
+	}
+	
+	public IArchimateModel getCurrentModel() {
+		return currentModel;
+	}
 }

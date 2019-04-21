@@ -24,6 +24,7 @@ import com.archimatetool.example.Messages;
 import com.archimatetool.example.hl.models.HLObject;
 import com.archimatetool.example.hl.models.Transaction;
 import com.archimatetool.example.hl.pcl.HLPermRule;
+import com.archimatetool.model.IArchimateModel;
 
 public class Writer {
 	
@@ -36,9 +37,11 @@ public class Writer {
     String ps = File.separatorChar + "";
     
 	private Data data;
+	private IArchimateModel model;
 	
-	public Writer(Data data) {
+	public Writer(IArchimateModel model, Data data) {
 		this.data = data;
+		this.model = model;
 	}
 	
 	public void writeReadme() throws FileNotFoundException, IOException {
@@ -136,7 +139,8 @@ public class Writer {
 				file.delete();
 			
 			if (file.createNewFile()) {
-				writeFile(file, dir.getName() + ps + file.getName(), Arrays.asList(ScriptsHandler.getScriptFile(transactions).split("\n")));
+				String lines =  ScriptsHandler.getScriptFile(model, transactions);
+				writeFile(file, dir.getName() + ps + file.getName(), Arrays.asList(lines.split("\n")));
 			}
 		}
 		deleteDir(dir);

@@ -41,7 +41,7 @@
 	        class="com.asgar.myexport.js.JSEditorView"
 	        icon="icons/icon.png"
 	        id="com.asgar.myexport.views.JSEditorView"
-	        name="JS Editor"
+	        name="Script Editor"
 	        restorable="true">
 	  </view>
 	</extension>

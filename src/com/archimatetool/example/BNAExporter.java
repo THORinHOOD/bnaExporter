@@ -54,13 +54,12 @@ public class BNAExporter {
  		List<HLPermRule> rules = getPermRules(models, relations);
  		//models = acceptRelations(models, relations);
  		
- 		
  		checkModels(models);
     	writeBNA(data, models, rules);
     }
     
     private void writeBNA(Data data, List<HLModel> models, List<HLPermRule> rules) throws IOException, ParseException {
-    	Writer writer = new Writer(data);
+    	Writer writer = new Writer(model, data);
 	    writer.start();
     	
 		writer.writeModels(models);

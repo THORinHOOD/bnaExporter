@@ -3,6 +3,7 @@ package com.archimatetool.example.hl.models;
 import java.util.Arrays;
 
 import com.archimatetool.example.exc.NotAppropriateFieldName;
+import com.archimatetool.example.exc.NotCorrectField;
 import com.archimatetool.model.IProperty;
 
 public class HLField {
@@ -36,15 +37,16 @@ public class HLField {
 	}
 	
 	public static HLField createField(HLModel model, String type, String name, Type relation) {
-		HLField field = new HLField(type, name, relation);
+		HLField field = new HLField(type, name, relation);		
 		
-		if (Character.isDigit(field.getName().charAt(0)) || 
-				field.getName().charAt(0) == '@' || 
-				!onlyCorrectSymbols(field.getName())) {
-			throw new NotAppropriateFieldName(model.getName(), field.getName());
-		}
+		if (!field.correctField())
+			throw new NotCorrectField(model.getName(), name);
 		
 		return field;
+	}
+	
+	public boolean correctField() {
+		return !(Character.isDigit(getName().charAt(0)) || getName().charAt(0) == '@' || !onlyCorrectSymbols(getName()));
 	}
 	
 	private static boolean onlyCorrectSymbols(String line) {
