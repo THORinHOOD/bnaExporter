@@ -1,14 +1,8 @@
 package com.archimatetool.example.hl.pcl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
 import com.archimatetool.example.hl.models.Asset;
 import com.archimatetool.example.hl.models.HLModel;
 import com.archimatetool.example.hl.models.Participant;
-import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.impl.AccessRelationship;
 
 public class HLPermRule {
@@ -91,33 +85,20 @@ public class HLPermRule {
 		return networkAdminSystemRule;
 	}
 	
-	public static HLPermRule createRule(AccessRelationship relation, List<HLModel> models) {
+	public static HLPermRule createRule(AccessRelationship relation, HLModel source, HLModel target) {
 		
-		IArchimateConcept source = relation.getSource();
-		IArchimateConcept target = relation.getTarget();
-		
-		Map<String, HLModel> modelsId = models.stream().collect(Collectors.toMap(x -> x.getID(), x -> x));
-		if (!modelsId.containsKey(source.getId()))
-			throw new IllegalArgumentException("Can't resolve relation \"" + relation.getName() + "\" with unknown model : " + source.getName());
-		if (!modelsId.containsKey(target.getId()))
-			throw new IllegalArgumentException("Can't resolve relation \"" + relation.getName() + "\" with unknown model : " + target.getName());
-		
-		HLModel sourceModel = modelsId.get(source.getId());
-		HLModel targetModel = modelsId.get(target.getId());
-		
-		if (!(sourceModel instanceof Participant))
+		if (!(source instanceof Participant))
 			throw new IllegalArgumentException("Source of access relation \""+ relation.getName()+"\" should be participant");
 		
-		if (!(targetModel instanceof Asset))
-			throw new IllegalArgumentException("Target of access relation \""+ relation.getName()+"\" should be asset");
-		
+		if (!(target instanceof Asset))
+			throw new IllegalArgumentException("Target of access relation \""+ relation.getName()+"\" should be Asset");
 		
 		HLPermRule rule = new HLPermRule();
 		
 		rule.name = relation.getName();
 		rule.description = relation.getDocumentation();
-		rule.participant = sourceModel.getPackage();
-		rule.resource = targetModel.getPackage();
+		rule.participant = source.getPackage();
+		rule.resource = target.getPackage();
 		//rule.condition = "";
 		//TODO
 		rule.operation = OPERATION_ALL;

@@ -34,9 +34,11 @@ public abstract class HLModel extends HLObject {
 	protected boolean hasId = true;
 	protected HLField idField = null;
 	
+	private IArchimateConcept concept;
+	
 	public HLModel(IArchimateConcept concept, HLModelType type, String namespace, boolean hasId) throws ParseException {
-		
-		super(concept.getId());
+		super(concept);
+	
 		this.namespace = namespace;
 		this.type = type;
 		this.hasId = hasId;
@@ -47,13 +49,13 @@ public abstract class HLModel extends HLObject {
 			fields.add(HLField.createField(this, prop, HLField.Type.PROPERTY));
 		
 		if (this.hasId)
-			makeIdProp();
+			findIdProp();
 		
 		documentation = concept.getDocumentation();
 		
 	}
 	
-	protected void makeIdProp() throws ParseException {
+	protected void findIdProp() throws ParseException {
 		for (int i = 0; i < fields.size(); i++) {
 			HLField field = fields.get(i);
 			if (field.isIdentifiedByThis()) {
@@ -65,11 +67,8 @@ public abstract class HLModel extends HLObject {
 			}
 		}
 		
-		if (idField == null) {
-			HLField field = HLField.createField(this, "String", name.toLowerCase() + "Id", HLField.Type.PROPERTY); 
-			fields.add(field);
-			idField = fields.get(fields.size() - 1);
-		}
+		if (idField == null)
+			hasId = false;
 	}
 	
 	public String getName() {
@@ -113,4 +112,10 @@ public abstract class HLModel extends HLObject {
 		
 		return result;
 	}
+	
+	public boolean hasId() {
+		return hasId;
+	}
+	
+	public abstract int getRank();
 }

@@ -1,15 +1,21 @@
 package com.archimatetool.example.hl.models;
 
+import com.archimatetool.model.IArchimateConcept;
+
 public abstract class HLObject {
 	
-	private String ID;
+	private IArchimateConcept concept;
 	
-	public HLObject(String ID) {
-		this.ID = ID;
+	public HLObject(IArchimateConcept concept) {
+		this.concept = concept;
 	}
 	
 	public String getID() {
-		return ID;
+		return concept.getId();
+	}
+	
+	public IArchimateConcept getConcept() {
+		return concept;
 	}
 	
 	public abstract String getHLView();

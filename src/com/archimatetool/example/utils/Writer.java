@@ -21,6 +21,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.archimatetool.example.Messages;
+import com.archimatetool.example.hl.models.HLModel;
 import com.archimatetool.example.hl.models.HLObject;
 import com.archimatetool.example.hl.models.Transaction;
 import com.archimatetool.example.hl.pcl.HLPermRule;
@@ -147,7 +148,7 @@ public class Writer {
 	}
 	
 	
-	public void writeModels(Collection<? extends HLObject> modelObjects) throws IOException, ParseException {
+	public void writeModels(Collection<HLModel> models) throws IOException, ParseException {
     	File dir = new File("models");
     	deleteDir(dir);
     	if (dir.mkdir()) {
@@ -157,9 +158,13 @@ public class Writer {
 				file.delete();
 			
 			if (file.createNewFile()) {
+				HLModel[] sortedModels = new HLModel[models.size()];
+				sortedModels = models.toArray(sortedModels);
+				Arrays.sort(sortedModels, (fmodel, smodel) -> ((HLModel)fmodel).getRank() - ((HLModel) smodel).getRank());
+				
 				ArrayList<String> lines = new ArrayList<String>();
 				lines.add("\n" + "namespace " + data.getStringValue(Data.NAMESPACE) + "\n");
-				for (HLObject obj : modelObjects)
+				for (HLObject obj : sortedModels)
 	    			lines.add(obj.getHLView() + "\n");
 				
 				writeFile(file, dir.getName() + ps + file.getName(), lines);
