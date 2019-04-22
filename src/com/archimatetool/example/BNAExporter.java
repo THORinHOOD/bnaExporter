@@ -188,7 +188,7 @@ public class BNAExporter {
     													.filter(x -> x.isPresent())
     													.map(x -> x.get())
     													.collect(Collectors.toList());
-    													
+    				
     	List<HLModel> remainder = preProcessedModels.stream()
     													.filter(x -> builtParticipants.stream().allMatch(participant -> !participant.getName().equals(x.getName())))
     													.collect(Collectors.toList());

@@ -50,7 +50,7 @@ public abstract class HLModel extends HLObject {
 		
 		if (this.hasId)
 			findIdProp();
-		
+				
 		documentation = concept.getDocumentation();
 		
 	}

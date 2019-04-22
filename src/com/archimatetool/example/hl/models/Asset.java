@@ -19,4 +19,12 @@ public class Asset extends HLModel {
 	public int getRank() {
 		return rank;
 	}
+	
+	@Override
+	public String getHLView() {
+		String res = super.getHLView();
+		if (!hasId)
+			res = "abstract " + res;
+		return res;
+	}
 }

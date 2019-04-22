@@ -20,4 +20,11 @@ public class Participant extends HLModel {
 		return rank;
 	}
 	
+	@Override
+	public String getHLView() {
+		String res = super.getHLView();
+		if (!hasId)
+			res = "abstract " + res;
+		return res;
+	}
 }
