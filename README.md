@@ -1,6 +1,6 @@
 #TODO
 
-1) Пофиксить вылеты при закрытии view Scripts Editor
+(DONE) 1) Пофиксить вылеты при закрытии view Scripts Editor
 2) Реализовать concept(s)
 3) Релизовать enum(s)
 4) Реализовать access conditions
