@@ -22,7 +22,7 @@ public class JSEditorCombo extends JSEditorObject {
 	
 	public JSEditorCombo(JSEditorView view) {
 		super(view);
-
+		
 		combo = new Combo(view.getParent(), SWT.BORDER | SWT.READ_ONLY);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		combo.setLayoutData(data);
@@ -83,4 +83,9 @@ public class JSEditorCombo extends JSEditorObject {
     public BusinessProcess getSelectedBP() {
     	return selectedBP;
     }
+
+	@Override
+	public void dispose() {
+		combo.dispose();
+	} 
 }

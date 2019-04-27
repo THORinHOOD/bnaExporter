@@ -17,10 +17,12 @@ import com.archimatetool.model.impl.ArchimateFactory;
 
 public class JSEditorLinkButton extends JSEditorObject {
 	
+	private Button link;
+	
 	public JSEditorLinkButton(JSEditorView view) {
 		super(view);
 		
-		Button link = new Button(view.getParent(), SWT.PUSH);
+		link = new Button(view.getParent(), SWT.PUSH);
 		link.setText("Link");
 		link.addSelectionListener(new SelectionListener() {
 			@Override
@@ -58,5 +60,10 @@ public class JSEditorLinkButton extends JSEditorObject {
 			
 			view.getCurrentModel().eResource().save(null);
 		}
+	}
+
+	@Override
+	public void dispose() {
+		link.dispose();
 	}
 }

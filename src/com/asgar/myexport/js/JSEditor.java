@@ -73,4 +73,9 @@ public class JSEditor extends JSEditorObject {
 	public File getCurrentScript() {
 		return currentScript;
 	}
+
+	@Override
+	public void dispose() {
+		text.dispose();
+	}
 }

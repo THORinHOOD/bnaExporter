@@ -118,4 +118,9 @@ public class JSEditorMenu extends JSEditorObject {
         	view.showError("Error creating script", "Can't create script");
         }
 	}
+
+	@Override
+	public void dispose() {
+		toolbar.dispose();
+	}
 }

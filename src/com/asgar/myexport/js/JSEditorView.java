@@ -53,6 +53,8 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 	
 	private Composite parent;
 	
+	private IWorkbenchPart lastPart;
+	
 	private JSEditorLinkButton linkButton;
 	private JSEditor editor;
 	private JSEditorCombo combo;
@@ -66,6 +68,17 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 		}
 	};
 	
+	public JSEditorView() {
+		System.out.println("JSEditorView : constructor");
+	}
+	@Override
+	public void dispose() {
+		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(this);
+		if (lastPart != null)
+			lastPart.removePropertyListener(propChanged);
+		super.dispose();
+	}
+	
 	@Override
 	public void createPartControl(Composite parent) {
 		this.parent = parent;
@@ -76,7 +89,9 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 		linkButton = new JSEditorLinkButton(this);
 		editor = new JSEditor(this);
 		
-		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(this);	
+		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(this);
+		
+		System.out.println("JSEditorView : createPartControl");
 	}
 
 	private void initLayout(Composite parent) {
@@ -117,8 +132,13 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 		    if (concept instanceof BusinessProcess) {
 		    	combo.selectBP((BusinessProcess) concept);
 		       
+		    	if (lastPart != null) {
+		    		lastPart.removePropertyListener(propChanged);
+		    	}
+		    	
 			    part.removePropertyListener(propChanged);
 			    part.addPropertyListener(propChanged);
+			    lastPart = part;
 		       
 		        editor.updateScript(findScript(combo.getSelectedBP()));
 		    }
