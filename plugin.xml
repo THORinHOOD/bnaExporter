@@ -5,7 +5,7 @@
    <extension
          point="com.archimatetool.editor.exportHandler">
       <exportHandler
-            class="com.archimatetool.example.MyExporter"
+            class="com.hyperledger.export.Main"
             id="com.archimatetool.import_export_example.exportHandler"
             label="Model To BNA...">
       </exportHandler>

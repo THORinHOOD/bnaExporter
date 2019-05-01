@@ -35,7 +35,6 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
-import com.archimatetool.example.utils.ScriptsHandler;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateFactory;
@@ -44,6 +43,7 @@ import com.archimatetool.model.IMetadata;
 import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.ArchimateFactory;
 import com.archimatetool.model.impl.BusinessProcess;
+import com.hyperledger.export.utils.ScriptsHandler;
 
 public class JSEditorView extends ViewPart implements ISelectionListener {
 	

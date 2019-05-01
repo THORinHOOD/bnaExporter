@@ -9,7 +9,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.layout.GridData;
 
-import com.archimatetool.example.utils.ScriptsHandler;
+import com.hyperledger.export.utils.ScriptsHandler;
 
 public class JSEditor extends JSEditorObject {
 	
