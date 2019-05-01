@@ -28,6 +28,7 @@ import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
 import com.archimatetool.model.impl.CompositionRelationship;
 import com.archimatetool.model.impl.SpecializationRelationship;
+import com.hyperledger.export.exceptions.CycleInheritanceException;
 import com.hyperledger.export.exceptions.DuplicateObjectNames;
 import com.hyperledger.export.exceptions.InvalidInheritanceException;
 import com.hyperledger.export.exceptions.UnexpectedIdException;
@@ -196,23 +197,25 @@ public class BNAExporter {
     	models
     		.stream()
     		.forEach(model -> {
-    			if(was.get(model) == 0) {
-    				inheritanceChecker(was, model);
-    			}
+    			if(was.get(model) == 0)
+    				if (!inheritanceChecker(was, model))
+    					throw new CycleInheritanceException(was.keySet().stream().filter(x -> was.get(x) == 1).collect(Collectors.toList()));
     		});
     }
     
-    private void inheritanceChecker(Map<HLModel, Integer> was, HLModel current) {
+    private boolean inheritanceChecker(Map<HLModel, Integer> was, HLModel current) {
     	if (current == null || was.get(current) == 2)
-    		return;
+    		return true;
     	
 		if (was.get(current) == 1) {
-			throw new InvalidInheritanceException(current.getFullName());
+			return false;
 		} else if (was.get(current) == 0) {
 			was.put(current, 1);
-			inheritanceChecker(was, current.getSuperModel());
+			if (!inheritanceChecker(was, current.getSuperModel()))
+				return false;
 			was.put(current, 2);
 		}
+		return true;
     }
  
     private List<HLModel> participantsProcessing(List<HLModel> preProcessedModels) {
