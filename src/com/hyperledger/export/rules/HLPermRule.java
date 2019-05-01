@@ -1,9 +1,12 @@
 package com.hyperledger.export.rules;
 
 import com.archimatetool.model.impl.AccessRelationship;
+import com.archimatetool.model.impl.ArchimateRelationship;
+import com.archimatetool.model.impl.AssignmentRelationship;
 import com.hyperledger.export.models.Asset;
 import com.hyperledger.export.models.HLModel;
 import com.hyperledger.export.models.Participant;
+import com.hyperledger.export.models.Transaction;
 
 public class HLPermRule {
 	
@@ -85,27 +88,38 @@ public class HLPermRule {
 		return networkAdminSystemRule;
 	}
 	
-	public static HLPermRule createRule(AccessRelationship relation, HLModel source, HLModel target) {
+	public static HLPermRule createRule(ArchimateRelationship relation, HLModel source, HLModel target) {
+	
+		if (source instanceof Participant && target instanceof Asset && relation instanceof AccessRelationship) {
+			HLPermRule rule = new HLPermRule();
+			
+			rule.name = relation.getName();
+			rule.description = relation.getDocumentation();
+			rule.participant = source.getFullName();
+			rule.resource = target.getFullName();
+			//rule.condition = "";
+			//TODO
+			rule.operation = OPERATION_ALL;
+			rule.action = ACTION_ALLOW;
+			
+			return rule;
+		} else if (source instanceof Participant && target instanceof Transaction && relation instanceof AssignmentRelationship) {
+			HLPermRule rule = new HLPermRule();
+			
+			rule.name = relation.getName();
+			rule.description = relation.getDocumentation();
+			rule.participant = source.getFullName();
+			rule.resource = target.getFullName();
+			//rule.condition = "";
+			//TODO
+			rule.operation = OPERATION_ALL;
+			rule.action = ACTION_ALLOW;
+			
+			return rule;
+		}
 		
-		if (!(source instanceof Participant))
-			throw new IllegalArgumentException("Source of access relation \""+ relation.getName()+"\" should be participant");
 		
-		if (!(target instanceof Asset))
-			throw new IllegalArgumentException("Target of access relation \""+ relation.getName()+"\" should be Asset");
-		
-		HLPermRule rule = new HLPermRule();
-		
-		rule.name = relation.getName();
-		rule.description = relation.getDocumentation();
-		rule.participant = source.getFullName();
-		rule.resource = target.getFullName();
-		//rule.condition = "";
-		//TODO
-		rule.operation = OPERATION_ALL;
-		rule.action = ACTION_ALLOW;
-		
-		
-		return rule;
+		return null;
 	}
 		
 	public static String getOperation(int actions) {

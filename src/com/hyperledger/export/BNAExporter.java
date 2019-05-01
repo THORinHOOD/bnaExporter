@@ -23,6 +23,8 @@ import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.AggregationRelationship;
+import com.archimatetool.model.impl.ArchimateRelationship;
+import com.archimatetool.model.impl.AssignmentRelationship;
 import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
@@ -113,17 +115,22 @@ public class BNAExporter {
      * @return
      */
     private List<HLPermRule> permissionRulesProcessing(List<HLModel> models) {
-    	List<HLPermRule> rules = models.stream()
-							    		.map(model -> model.getConcepts().stream()
-										    			.map(concept ->	concept.getSourceRelationships().stream()
-															.filter(x -> (x instanceof AccessRelationship))
-															.map(x -> (AccessRelationship) x)
-															.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
-															.collect(Collectors.toList()))
+    	List<HLPermRule> rules = models
+    								.stream()
+							    	.map(model -> model.getConcepts()
+							    						.stream()
+							    						.map(concept ->	concept.getSourceRelationships()
+														    					.stream()
+														    					.filter(x -> (x instanceof AccessRelationship) || (x instanceof AssignmentRelationship))
+														    					.map(x -> (ArchimateRelationship) x)
+														    					.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
+														    					.filter(x -> x != null)
+														    					.collect(Collectors.toList()))
 										    			.flatMap(List::stream)
 										    			.collect(Collectors.toList()))
-							    		.flatMap(List::stream)
-							    		.collect(Collectors.toList());    	
+							    	.flatMap(List::stream)
+							    	.collect(Collectors.toList()); 
+    	
     	rules.add(HLPermRule.getNetworkAdminUserRule());
     	rules.add(HLPermRule.getNetworkAdminSystemRule());
     	rules.add(HLPermRule.getSystemAclRule());
@@ -135,6 +142,7 @@ public class BNAExporter {
     	List<HLModel> models = collectAllModels(folder, data);
     	models = relationsProcessing(models);
     	models = participantsProcessing(models);
+    	//models = transactionsProcessing(models);
     	return models;
     }
   
@@ -218,6 +226,24 @@ public class BNAExporter {
 		return true;
     }
  
+    private List<HLModel> transactionsProcessing(List<HLModel> preProcessedModels) {
+    	preProcessedModels
+			.stream()
+			.filter(model -> model instanceof Transaction)
+			.map(model -> (Transaction) model)
+			.forEach(transaction -> transaction.getConcepts()
+							    					.stream()
+							    					.forEach(concept -> concept.getSourceRelationships()
+														    						.stream()
+														    						.filter(relation -> relation instanceof AccessRelationship)
+														    						.forEach(relation -> {
+														    									HLModel target = conceptToModel.get(relation.getTarget());
+														    									transaction.addField(HLField.createField(transaction, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
+														    								})));
+    	return preProcessedModels;
+    }
+    
+    
     private List<HLModel> participantsProcessing(List<HLModel> preProcessedModels) {
     	
     	List<List<HLModel>> composites = preProcessedModels.stream()

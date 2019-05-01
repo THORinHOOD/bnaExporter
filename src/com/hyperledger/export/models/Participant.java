@@ -28,7 +28,6 @@ public class Participant extends HLModel {
 			
 			HLModel current = this;
 			while (current != null) {
-				System.out.println(current);
 				if (current.hasId) {
 					this.hasId = true;
 					break;

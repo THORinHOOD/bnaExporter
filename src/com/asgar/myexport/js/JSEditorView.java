@@ -104,7 +104,7 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 	
     @Override
     public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-    	if (part == this) {
+    	if (part == this || part == null) {
     		return;
     	}
     	

@@ -83,6 +83,15 @@ public class HLField {
 		return Arrays.asList(primitiveTypes).contains(type);
 	}
 	
+	public void setRelation(Type relation) {
+		this.relation = relation;
+	}
+	
+	public Type getRelation() {
+		return relation;
+	}
+	
+	
 	@Override
 	public String toString() {
 		String result = type + " " + name;
