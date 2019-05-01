@@ -23,8 +23,21 @@ public class Asset extends HLModel {
 	@Override
 	public String getHLView() {
 		String res = super.getHLView();
-		if (!hasId)
-			res = "abstract " + res;
+		if (!this.hasId) {
+			
+			HLModel current = this;
+			while (current != null && current.isExtends()) {
+				if (current.hasId) {
+					this.hasId = true;
+					break;
+				} else {
+					current = current.getSuperModel();
+				}
+			}
+			
+			if (!this.hasId)
+				res = "abstract " + res;
+		}
 		return res;
 	}
 }
