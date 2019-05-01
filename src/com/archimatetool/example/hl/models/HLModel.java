@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.archimatetool.example.exc.MultipleInheritanceException;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
 
@@ -20,6 +21,7 @@ public abstract class HLModel extends HLObject {
 	
 	private final String HEADER = "%s %s";
 	private final String IDENTIFIED_BY = "identified by %s";
+	private final String EXTENDS = "extends %s";
 	private final String CONTENT = "{\n%s}";
 	
 	protected HLModelType type;
@@ -28,27 +30,27 @@ public abstract class HLModel extends HLObject {
 	protected String name;
 	protected String namespace;
 	protected List<HLField> fields;
-	
-	protected boolean hasParent = false;
-	
-	protected boolean hasId = true;
+		
+	protected boolean identified;
+	protected boolean hasId = false;
 	protected HLField idField = null;
 	
-	private IArchimateConcept concept;
+	protected HLModel superModel;
+	protected boolean extendsModel = false;
 	
-	public HLModel(IArchimateConcept concept, HLModelType type, String namespace, boolean hasId) throws ParseException {
+	public HLModel(IArchimateConcept concept, HLModelType type, String namespace, boolean identified) throws ParseException {
 		super(concept);
-	
+		
 		this.namespace = namespace;
 		this.type = type;
-		this.hasId = hasId;
+		this.identified = identified;
 		name = concept.getName();
 		
 		fields = new ArrayList<HLField>();
 		for (IProperty prop : concept.getProperties())
 			fields.add(HLField.createField(this, prop, HLField.Type.PROPERTY));
 		
-		if (this.hasId)
+		if (this.identified)
 			findIdProp();
 				
 		documentation = concept.getDocumentation();
@@ -61,6 +63,7 @@ public abstract class HLModel extends HLObject {
 			if (field.isIdentifiedByThis()) {
 				if (idField == null) {
 					idField = field;
+					hasId = true;
 				} else {
 					throw new ParseException("Id field should be one : " + name, i);
 				}
@@ -75,7 +78,7 @@ public abstract class HLModel extends HLObject {
 		return name;
 	}
 	
-	public String getPackage() {
+	public String getFullName() {
 		return namespace + "." + name;
 	}
 	
@@ -99,6 +102,8 @@ public abstract class HLModel extends HLObject {
 		String result = String.format(HEADER, type.toString(), name);
 		if (hasId)
 			result += " " + String.format(IDENTIFIED_BY, idField.getName());
+		if (extendsModel)
+			result += " " + String.format(EXTENDS, superModel.getName());
 		result += "\n" + String.format(CONTENT, fields);
 		
 		if ((documentation != null) && (!documentation.trim().equals(""))) {
@@ -116,6 +121,15 @@ public abstract class HLModel extends HLObject {
 	public boolean hasId() {
 		return hasId;
 	}
+	
+	public void setSuperModel(HLModel model) {
+		if (this.extendsModel) {
+			throw new MultipleInheritanceException(getName());
+		}
+		this.superModel = model;
+		this.extendsModel = true;
+	}
+	
 	
 	public abstract int getRank();
 }

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ import java.util.stream.Stream;
 import org.eclipse.emf.ecore.EObject;
 
 import com.archimatetool.example.exc.DuplicateObjectNames;
+import com.archimatetool.example.exc.InvalidInheritanceException;
 import com.archimatetool.example.exc.UnexpectedIdException;
 import com.archimatetool.example.exc.UnknownTypeException;
 import com.archimatetool.example.hl.models.Asset;
@@ -32,11 +34,11 @@ import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.AggregationRelationship;
-import com.archimatetool.model.impl.ArchimateRelationship;
 import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
 import com.archimatetool.model.impl.CompositionRelationship;
+import com.archimatetool.model.impl.SpecializationRelationship;
 
 public class BNAExporter {
 
@@ -44,11 +46,14 @@ public class BNAExporter {
 
 	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) || (x instanceof BusinessObject) || (x instanceof BusinessProcess);
 		
+	private HashMap<IArchimateConcept, HLModel> conceptToModel;
+	
     public BNAExporter() {
-    	
+    	conceptToModel = new HashMap<IArchimateConcept, HLModel>();
     }
     
     public BNAExporter(IArchimateModel model) {
+    	this();
     	this.model = model;
     }
         
@@ -105,16 +110,17 @@ public class BNAExporter {
      * @return
      */
     private List<HLPermRule> permissionRulesProcessing(List<HLModel> models) {
-    	
     	List<HLPermRule> rules = models.stream()
-    			.map(model -> model.getConcept().getSourceRelationships().stream()
-    							.filter(x -> (x instanceof AccessRelationship))
-    							.map(x -> (AccessRelationship) x)
-    							.map(access -> HLPermRule.createRule(access, model, getHLModelByConcept(models, access.getTarget())))
-    							.collect(Collectors.toList()))
-    			.flatMap(List::stream)
-    	        .collect(Collectors.toList());
-    	
+							    		.map(model -> model.getConcepts().stream()
+										    			.map(concept ->	concept.getSourceRelationships().stream()
+															.filter(x -> (x instanceof AccessRelationship))
+															.map(x -> (AccessRelationship) x)
+															.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
+															.collect(Collectors.toList()))
+										    			.flatMap(List::stream)
+										    			.collect(Collectors.toList()))
+							    		.flatMap(List::stream)
+							    		.collect(Collectors.toList());    	
     	rules.add(HLPermRule.getNetworkAdminUserRule());
     	rules.add(HLPermRule.getNetworkAdminSystemRule());
     	rules.add(HLPermRule.getSystemAclRule());
@@ -122,9 +128,9 @@ public class BNAExporter {
     	return rules;
     }
 
-    private List<HLModel> generateModels(IFolder folder, Data data) throws ParseException {
+    private List<HLModel> generateModels(IFolder folder, Data data) throws ParseException {    	
     	List<HLModel> models = collectAllModels(folder, data);
-    	models = assetsRelationsProcessing(models);
+    	models = relationsProcessing(models);
     	models = participantsProcessing(models);
     	return models;
     }
@@ -143,33 +149,33 @@ public class BNAExporter {
 			if (isModel.test(object)) {
 	    		HLModel model = HLModelFabric.createModel((IArchimateConcept) object, namespace);
 	    		models.add(model);
+	    		conceptToModel.put((IArchimateConcept) object, model);
 			}
     	}
     	return models;
     }
-    
+     
     /**
      * На данный момент только композиция и агрегация у Asset'ов
      * @param models
      * @param concepts
      * @return
      */
-    private List<HLModel> assetsRelationsProcessing(List<HLModel> models) {
+    private List<HLModel> relationsProcessing(List<HLModel> models) {
     	models.stream()
-    			.forEach(model -> model.getConcept().getSourceRelationships()
+    			.forEach(model -> model.getConcepts().stream().forEach(concept -> concept.getSourceRelationships()
     						.stream()
     						.forEach(relation -> {
     							IArchimateConcept target = relation.getTarget();
     							HLField field = null;
     							if (relation instanceof CompositionRelationship) {
-    								field = HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY);
+    								model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY));
     							} else if (relation instanceof AggregationRelationship) {
-    								field = HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER);
+    								model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
+    							} else if (relation instanceof SpecializationRelationship) {
+    								model.setSuperModel(conceptToModel.get(target));
     							}
-    							
-    							if (field != null)
-    								model.addField(field);
-    						})
+    						}))
     					);
     	return models;
     }
@@ -190,7 +196,7 @@ public class BNAExporter {
     													.collect(Collectors.toList());
     				
     	List<HLModel> remainder = preProcessedModels.stream()
-    													.filter(x -> builtParticipants.stream().allMatch(participant -> !participant.getName().equals(x.getName())))
+    													.filter(x -> builtParticipants.stream().allMatch(participant -> !participant.getFullName().equals(x.getFullName())))
     													.collect(Collectors.toList());
     	
     	return Stream.concat(remainder.stream(), builtParticipants.stream()).collect(Collectors.toList());
@@ -219,7 +225,27 @@ public class BNAExporter {
     	if (unexpectedIds.size() > 0)
     		throw new UnexpectedIdException(unexpectedIds.get(0).getName());
     	
-    	assets.stream().forEach(asset -> asset.getFields().stream().forEach(field -> participant.addField(field)));
+    	// проверка, что ассеты ни от кого не наследуются и не наследуют
+    	boolean hasInheritance = !assets
+						    		.stream()
+						    		.allMatch(asset -> asset.getConcepts()
+						    							.stream()
+						    							.allMatch(concept -> concept.getSourceRelationships()
+						    													.stream()
+						    													.allMatch(relation -> !(relation instanceof SpecializationRelationship))
+						    												 &&
+						    												 
+						    												 concept.getTargetRelationships()
+						    												 	.stream()
+						    												 	.allMatch(relation -> !(relation instanceof SpecializationRelationship))));
+    	if (hasInheritance)
+    		throw new InvalidInheritanceException(participant.getFullName());
+    	
+    	assets.stream().forEach(asset -> {
+    		asset.getFields().stream().forEach(field -> participant.addField(field));
+    		participant.addConcepts(asset.getConcepts());
+    		asset.getConcepts().stream().forEach(concept -> conceptToModel.put(concept, participant));
+    	});
     	return Optional.of(participant);
     }
         
@@ -236,15 +262,5 @@ public class BNAExporter {
     public IArchimateModel getModel() {
     	return model;
     }
-    
-    //TODO ПРИДУМАТЬ КАК УБРАТЬ ЭТУ ЗАГЛУШКУ
-    public HLModel getHLModelByConcept(List<HLModel> models, IArchimateConcept concept) {
-    	List<HLModel> candidates = models.stream()
-    			.filter(model -> model.getID().equals(concept.getId()))
-    			.collect(Collectors.toList());
-    	if (candidates.size() != 1)
-    		throw new IllegalArgumentException("Can\'t find model by concept \"" + concept.getName() + "\"");
-    	return candidates.get(0);
-    }
-    
+
 }

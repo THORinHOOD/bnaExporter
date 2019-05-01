@@ -97,8 +97,8 @@ public class HLPermRule {
 		
 		rule.name = relation.getName();
 		rule.description = relation.getDocumentation();
-		rule.participant = source.getPackage();
-		rule.resource = target.getPackage();
+		rule.participant = source.getFullName();
+		rule.resource = target.getFullName();
 		//rule.condition = "";
 		//TODO
 		rule.operation = OPERATION_ALL;
