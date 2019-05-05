@@ -69,8 +69,8 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 	};
 	
 	public JSEditorView() {
-		System.out.println("JSEditorView : constructor");
 	}
+	
 	@Override
 	public void dispose() {
 		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(this);
@@ -90,8 +90,6 @@ public class JSEditorView extends ViewPart implements ISelectionListener {
 		editor = new JSEditor(this);
 		
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(this);
-		
-		System.out.println("JSEditorView : createPartControl");
 	}
 
 	private void initLayout(Composite parent) {
