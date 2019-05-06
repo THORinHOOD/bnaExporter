@@ -3,20 +3,27 @@ package com.hyperledger.views.properties.access;
 import java.util.ArrayList;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.ui.forms.widgets.ColumnLayout;
 
-public class AllowsTab extends HLTab {
+import com.archimatetool.model.IArchimateConcept;
+import com.archimatetool.model.impl.AccessRelationship;
 
-	public static final String LABEL = "Allows";
+public class AccessPropertiesTab extends HLTab {
+
+	public static final String LABEL = "Access Properties";
 	
 	private final FocusListener disableFocus = new FocusListener() {
 		@Override
@@ -28,22 +35,55 @@ public class AllowsTab extends HLTab {
 		public void focusLost(FocusEvent e) {}
 	};
 	
-	public AllowsTab(TabFolder folder) {
+	private Composite composite;
+	
+	public AccessPropertiesTab(TabFolder folder) {
 		super(folder, LABEL);
-		
-		final Composite composite = new Composite(folder, SWT.NONE);
-		ColumnLayout layout = new ColumnLayout();
-		layout.maxNumColumns = 1;
+	}
+	
+	public void open(IArchimateConcept rel) {
+		initTab((AccessRelationship) rel);
+		openTab(composite);
+	}
+	
+	public void close() {
+		closeTab();
+	}
+	
+	private void initTab(AccessRelationship rel) {
+		composite = new Composite(getFolder(), SWT.NONE);
+		GridLayout layout = new GridLayout();
+		GridData data = new GridData(GridData.FILL_BOTH);
+		layout.numColumns = 1;
         composite.setLayout(layout);
+        composite.setLayoutData(data);
+        
+        setLabel(rel.getName());
         
 		initAllowTypeGroup(composite);
 		initOperationsGroup(composite);
+		initConditionGroup(composite);
+	}
+	
+	private void initConditionGroup(Composite composite) {
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		Group conditionGroup = new Group(composite, SWT.NULL);
+		conditionGroup.setText("Condition");
+		conditionGroup.setLayout(new GridLayout());
+		conditionGroup.setLayoutData(gridData);
 		
-		getTab().setControl(composite);
+
+		StyledText text = new StyledText(conditionGroup, SWT.H_SCROLL | SWT.V_SCROLL);
+		text.setLayoutData(gridData);
+		text.setLayout(new GridLayout());
+		
+		conditionGroup.pack();
 	}
 	
 	private void initOperationsGroup(Composite composite) {
+		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		Group operationsTypes = new Group(composite, SWT.NULL);
+		operationsTypes.setLayoutData(gridData);
 		operationsTypes.setText("Operations");
 		RowLayout layout = new RowLayout();
 		operationsTypes.setLayout(layout);
@@ -84,6 +124,8 @@ public class AllowsTab extends HLTab {
 						public void widgetSelected(SelectionEvent e) {
 							if (allBtns.stream().allMatch(btn -> btn.getSelection() || btn.equals(all))) {
 								all.setSelection(true);
+							} else {
+								all.setSelection(false);
 							}
 						}
 						
@@ -91,6 +133,8 @@ public class AllowsTab extends HLTab {
 						public void widgetDefaultSelected(SelectionEvent e) {
 							if (allBtns.stream().allMatch(btn -> btn.getSelection() || btn.equals(all))) {
 								all.setSelection(true);
+							} else {
+								all.setSelection(false);
 							}
 						}
 					});
@@ -101,7 +145,9 @@ public class AllowsTab extends HLTab {
 	}
 	
 	private void initAllowTypeGroup(Composite composite) {
+		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		Group allowType = new Group(composite, SWT.NULL);
+		allowType.setLayoutData(gridData);
 		allowType.setText("Type of access rule");
 		ColumnLayout layout = new ColumnLayout();
 		layout.maxNumColumns = 1;
@@ -126,5 +172,9 @@ public class AllowsTab extends HLTab {
 		btn.setText(label);
 		btn.addFocusListener(disableFocus);
 		return btn;
+	}
+	
+	public void dispose() {
+		getTab().dispose();
 	}
 }
