@@ -59,6 +59,7 @@ public class JSEditorLinkButton extends JSEditorObject {
 			}
 			
 			view.getCurrentModel().eResource().save(null);
+			
 		}
 	}
 

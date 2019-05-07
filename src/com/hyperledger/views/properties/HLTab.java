@@ -1,19 +1,21 @@
-package com.hyperledger.views.properties.access;
+package com.hyperledger.views.properties;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 
 import com.archimatetool.model.IArchimateConcept;
 
-public abstract class HLTab {
-	private TabItem tab;
+public abstract class HLTab<T extends IArchimateConcept> {
+	private CTabItem tab;
 	private String label;
-	private TabFolder folder;
+	private CTabFolder folder;
 	private Boolean isOpened;
 	
-	public HLTab(TabFolder folder, String label) {
+	public HLTab(CTabFolder folder, String label) {
 		this.folder = folder;
 		this.label = label;
 		isOpened = false;
@@ -21,9 +23,10 @@ public abstract class HLTab {
 			
 	protected void openTab(Composite control) {
 		if (!isOpened) {
-			tab = new TabItem(folder, SWT.NONE);
-			tab.setText(this.label);
+			tab = new CTabItem(folder, SWT.NONE);
+			setLabel(this.label);
 			tab.setControl(control);
+			tab.setShowClose(true);
 			isOpened = true;
 		}
 	}
@@ -36,6 +39,9 @@ public abstract class HLTab {
 	}
 	
 	public void setLabel(String label) {
+		if (label.trim().equals("")) {
+			label = "(Unknown)";
+		}
 		this.label = label;
 		if (tab != null && !tab.isDisposed())
 			tab.setText(label);
@@ -45,14 +51,14 @@ public abstract class HLTab {
 		return label;
 	}
 	
-	public TabItem getTab() {
+	public CTabItem getTab() {
 		return tab;
 	}
 	
-	public TabFolder getFolder() {
+	public CTabFolder getFolder() {
 		return folder;
 	}
 		
-	public abstract void open(IArchimateConcept concept);
+	public abstract void open(T concept);
 	public abstract void close();
 }

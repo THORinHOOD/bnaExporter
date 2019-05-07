@@ -3,9 +3,12 @@ package com.hyperledger.views.properties.access;
 import java.util.ArrayList;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
@@ -14,16 +17,35 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.ui.forms.widgets.ColumnLayout;
 
-import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.impl.AccessRelationship;
+import com.hyperledger.export.rules.HLPermRule;
+import com.hyperledger.views.properties.HLTabWithConcept;
 
-public class AccessPropertiesTab extends HLTab {
+public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 
 	public static final String LABEL = "Access Properties";
+			
+	private static final String ACTION_KEY = "ACTION";
+	private static final String OPERATION_KEY = "OPERATION";
+	private static final String CONDITION_KEY = "CONDITION";
+	
+	private final SelectionListener actionListener = new SelectionListener() {
+
+		@Override
+		public void widgetSelected(SelectionEvent e) {
+			Button btn = (Button) e.getSource();
+			if (btn.getText().equals("Allow") && btn.getSelection()) {
+				setProperty(ACTION_KEY, HLPermRule.ACTION_ALLOW);
+			} else {
+				setProperty(ACTION_KEY, HLPermRule.ACTION_DENY);
+			}
+		}
+
+		@Override
+		public void widgetDefaultSelected(SelectionEvent e) {}
+	};
 	
 	private final FocusListener disableFocus = new FocusListener() {
 		@Override
@@ -35,22 +57,12 @@ public class AccessPropertiesTab extends HLTab {
 		public void focusLost(FocusEvent e) {}
 	};
 	
-	private Composite composite;
-	
-	public AccessPropertiesTab(TabFolder folder) {
+	public AccessPropertiesTab(CTabFolder folder) {
 		super(folder, LABEL);
 	}
 	
-	public void open(IArchimateConcept rel) {
-		initTab((AccessRelationship) rel);
-		openTab(composite);
-	}
-	
-	public void close() {
-		closeTab();
-	}
-	
-	private void initTab(AccessRelationship rel) {
+	@Override
+	protected void initTab() {
 		composite = new Composite(getFolder(), SWT.NONE);
 		GridLayout layout = new GridLayout();
 		GridData data = new GridData(GridData.FILL_BOTH);
@@ -58,7 +70,7 @@ public class AccessPropertiesTab extends HLTab {
         composite.setLayout(layout);
         composite.setLayoutData(data);
         
-        setLabel(rel.getName());
+        setLabel(concept.getName());
         
 		initAllowTypeGroup(composite);
 		initOperationsGroup(composite);
@@ -71,11 +83,19 @@ public class AccessPropertiesTab extends HLTab {
 		conditionGroup.setText("Condition");
 		conditionGroup.setLayout(new GridLayout());
 		conditionGroup.setLayoutData(gridData);
-		
 
 		StyledText text = new StyledText(conditionGroup, SWT.H_SCROLL | SWT.V_SCROLL);
 		text.setLayoutData(gridData);
 		text.setLayout(new GridLayout());
+		
+		text.setText(getProperty(CONDITION_KEY, ""));
+		text.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				setProperty(CONDITION_KEY, text.getText());
+			}
+		});
 		
 		conditionGroup.pack();
 	}
@@ -141,9 +161,25 @@ public class AccessPropertiesTab extends HLTab {
 				}
 			});
 		
+		create.addSelectionListener(buildOperationSelectListener(HLPermRule.CREATE));
+		read.addSelectionListener(buildOperationSelectListener(HLPermRule.READ));
+		update.addSelectionListener(buildOperationSelectListener(HLPermRule.UPDATE));
+		delete.addSelectionListener(buildOperationSelectListener(HLPermRule.DELETE));
+		all.addSelectionListener(buildOperationSelectListener(HLPermRule.ALL));
+		
+		try {
+			create.setSelection((HLPermRule.CREATE & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
+			read.setSelection((HLPermRule.READ & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
+			update.setSelection((HLPermRule.UPDATE & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
+			delete.setSelection((HLPermRule.DELETE & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
+			all.setSelection((HLPermRule.ALL & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) >= HLPermRule.ALL);
+		} catch(Exception ex) {
+			//TODO
+		}
+		
 		operationsTypes.pack();
 	}
-	
+		
 	private void initAllowTypeGroup(Composite composite) {
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		Group allowType = new Group(composite, SWT.NULL);
@@ -153,8 +189,19 @@ public class AccessPropertiesTab extends HLTab {
 		layout.maxNumColumns = 1;
 		allowType.setLayout(layout);
 		
-		initRadioButton(allowType, "Allow").setSelection(true);
-		initRadioButton(allowType, "Deny").setSelection(false);
+		Button allow = initRadioButton(allowType, "Allow");
+		Button deny = initRadioButton(allowType, "Deny");
+		
+		allow.addSelectionListener(actionListener);
+		deny.addSelectionListener(actionListener);
+		
+		if(getProperty(ACTION_KEY, HLPermRule.ACTION_ALLOW).equals(HLPermRule.ACTION_DENY)) {
+			allow.setSelection(false);
+			deny.setSelection(true);
+		} else {
+			allow.setSelection(true);
+			deny.setSelection(false);
+		}
 		
 		allowType.pack();
 	}
@@ -174,7 +221,36 @@ public class AccessPropertiesTab extends HLTab {
 		return btn;
 	}
 	
+	private SelectionListener buildOperationSelectListener(int FLAG) {
+		return new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				Button btn = (Button) e.getSource();
+				if (btn.getSelection()) {
+					try {
+						int current = Integer.valueOf(getProperty(OPERATION_KEY, "0"));
+						setProperty(OPERATION_KEY, String.valueOf(current | FLAG));
+					} catch(Exception ex) {
+						//TODO
+					}
+				} else {
+					if (FLAG != HLPermRule.ALL) {
+						try {
+							int current = Integer.valueOf(getProperty(OPERATION_KEY, "0"));
+							setProperty(OPERATION_KEY, String.valueOf(current & (FLAG ^ HLPermRule.ALL) ));
+						} catch(Exception ex) {
+							//TODO
+						}
+					}
+				}
+			}
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {}
+		};
+	}
+	
 	public void dispose() {
 		getTab().dispose();
 	}
+	
 }

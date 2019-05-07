@@ -1,18 +1,21 @@
 package com.hyperledger.views.properties;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.inject.Inject;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
+import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.part.ViewPart;
 
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.hyperledger.views.properties.access.AccessPropertiesTab;
-import com.hyperledger.views.properties.access.HLTab;
 
 public class PropertiesView extends ViewPart {
 
@@ -24,16 +27,16 @@ public class PropertiesView extends ViewPart {
 	private Action action2;
 	private Action doubleClickAction;
 
-	private TabFolder folder;
+	private CTabFolder folder;
 	private HLSelectionHandler selectionHandler;
-	private AccessPropertiesTab accessPropsTab;
-	
+	private Map<String, HLTabWithConcept> tabs;
+
 	@Override
 	public void createPartControl(Composite parent) {
-		
-		folder = new TabFolder(parent, SWT.NONE);
+		tabs = new HashMap<>();
+		folder = new CTabFolder(parent, SWT.NONE);
 		initSelectionHandler();
-		accessPropsTab = new AccessPropertiesTab(folder);
+		//accessPropsTab = new AccessPropertiesTab(folder);
 		
 //	    viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);	
 //	    
@@ -53,20 +56,22 @@ public class PropertiesView extends ViewPart {
 	private void archimateConceptSelectionHandler(Boolean isConcept, IArchimateConcept concept) {
 		if (isConcept) {
 			if (concept instanceof AccessRelationship) {
-				accessPropsTab.open(concept);
-			} else {
-				accessPropsTab.close();
+				openAccessRelationshipTab((AccessRelationship) concept);
 			}
-		} else {
-			accessPropsTab.close();
 		}
 	}
 	
-	private void hideAccessPropsTab() {
-		if (accessPropsTab != null && !accessPropsTab.getTab().isDisposed())
-			accessPropsTab.dispose();
+	private void openAccessRelationshipTab(AccessRelationship relation) {
+		if (!tabs.containsKey(relation.getId())) {
+			AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder);
+			tabs.put(relation.getId(), accessPropertiesTab);
+			accessPropertiesTab.open(relation);
+			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
+		} else {
+			folder.setSelection(tabs.get(relation.getId()).getTab());
+		}
 	}
-	
+		
 	private void initSelectionHandler() {
 		selectionHandler = new HLSelectionHandler();
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionHandler);
