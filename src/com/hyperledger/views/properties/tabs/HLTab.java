@@ -1,4 +1,4 @@
-package com.hyperledger.views.properties;
+package com.hyperledger.views.properties.tabs;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -9,7 +9,7 @@ import org.eclipse.swt.widgets.TabItem;
 
 import com.archimatetool.model.IArchimateConcept;
 
-public abstract class HLTab<T extends IArchimateConcept> {
+public abstract class HLTab {
 	private CTabItem tab;
 	private String label;
 	private CTabFolder folder;
@@ -58,7 +58,4 @@ public abstract class HLTab<T extends IArchimateConcept> {
 	public CTabFolder getFolder() {
 		return folder;
 	}
-		
-	public abstract void open(T concept);
-	public abstract void close();
 }

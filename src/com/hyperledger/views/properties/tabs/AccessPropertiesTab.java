@@ -1,4 +1,4 @@
-package com.hyperledger.views.properties.access;
+package com.hyperledger.views.properties.tabs;
 
 import java.util.ArrayList;
 
@@ -19,11 +19,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.ui.forms.widgets.ColumnLayout;
 
+import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
+import com.archimatetool.model.impl.ArchimateRelationship;
 import com.hyperledger.export.rules.HLPermRule;
-import com.hyperledger.views.properties.HLTabWithConcept;
+import com.hyperledger.views.properties.HLPropertiesChangeHandler;
 
-public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
+public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship> {
 
 	public static final String LABEL = "Access Properties";
 			
@@ -36,7 +38,7 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 		@Override
 		public void widgetSelected(SelectionEvent e) {
 			Button btn = (Button) e.getSource();
-			if (btn.getText().equals("Allow") && btn.getSelection()) {
+			if (btn.getText().equals("Allow")) {
 				setProperty(ACTION_KEY, HLPermRule.ACTION_ALLOW);
 			} else {
 				setProperty(ACTION_KEY, HLPermRule.ACTION_DENY);
@@ -57,8 +59,19 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 		public void focusLost(FocusEvent e) {}
 	};
 	
-	public AccessPropertiesTab(CTabFolder folder) {
-		super(folder, LABEL);
+	private Button allow;
+	private Button deny;
+	
+	private StyledText conditionText;
+	
+	private Button all;
+	private Button create;
+	private Button read;
+	private Button update;
+	private Button delete;
+	
+	public AccessPropertiesTab(CTabFolder folder, HLPropertiesChangeHandler propertiesChangeHandler) {
+		super(folder, propertiesChangeHandler, LABEL);
 	}
 	
 	@Override
@@ -84,16 +97,16 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 		conditionGroup.setLayout(new GridLayout());
 		conditionGroup.setLayoutData(gridData);
 
-		StyledText text = new StyledText(conditionGroup, SWT.H_SCROLL | SWT.V_SCROLL);
-		text.setLayoutData(gridData);
-		text.setLayout(new GridLayout());
+		conditionText = new StyledText(conditionGroup, SWT.H_SCROLL | SWT.V_SCROLL);
+		conditionText.setLayoutData(gridData);
+		conditionText.setLayout(new GridLayout());
 		
-		text.setText(getProperty(CONDITION_KEY, ""));
-		text.addModifyListener(new ModifyListener() {
+		conditionText.setText(getProperty(CONDITION_KEY, ""));
+		conditionText.addModifyListener(new ModifyListener() {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				setProperty(CONDITION_KEY, text.getText());
+				setProperty(CONDITION_KEY, conditionText.getText());
 			}
 		});
 		
@@ -110,11 +123,11 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 		
 		ArrayList<Button> allBtns = new ArrayList<>();
 		
-		Button all = initCheckButton(operationsTypes, "All");
-		Button create = initCheckButton(operationsTypes, "Create");
-		Button read = initCheckButton(operationsTypes, "Read");
-		Button update = initCheckButton(operationsTypes, "Update");
-		Button delete = initCheckButton(operationsTypes, "Delete");
+		all = initCheckButton(operationsTypes, "All");
+		create = initCheckButton(operationsTypes, "Create");
+		read = initCheckButton(operationsTypes, "Read");
+		update = initCheckButton(operationsTypes, "Update");
+		delete = initCheckButton(operationsTypes, "Delete");
 		allBtns.add(all);
 		allBtns.add(create);
 		allBtns.add(read);
@@ -189,8 +202,8 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 		layout.maxNumColumns = 1;
 		allowType.setLayout(layout);
 		
-		Button allow = initRadioButton(allowType, "Allow");
-		Button deny = initRadioButton(allowType, "Deny");
+		allow = initRadioButton(allowType, "Allow");
+		deny = initRadioButton(allowType, "Deny");
 		
 		allow.addSelectionListener(actionListener);
 		deny.addSelectionListener(actionListener);
@@ -206,6 +219,11 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 		allowType.pack();
 	}
 
+	@Override
+	protected void onConceptChanging() {
+		setLabel(concept.getName());	
+	}
+	
 	private Button initCheckButton(Composite composite, String label) {
 		return initButton(composite, label, SWT.CHECK);
 	}
@@ -251,6 +269,5 @@ public class AccessPropertiesTab extends HLTabWithConcept<AccessRelationship> {
 	
 	public void dispose() {
 		getTab().dispose();
-	}
-	
+	}	
 }

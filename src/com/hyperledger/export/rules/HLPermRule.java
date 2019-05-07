@@ -1,5 +1,7 @@
 package com.hyperledger.export.rules;
 
+import com.archimatetool.model.IArchimateConcept;
+import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
 import com.archimatetool.model.impl.AssignmentRelationship;
@@ -9,6 +11,10 @@ import com.hyperledger.export.models.Participant;
 import com.hyperledger.export.models.Transaction;
 
 public class HLPermRule {
+	
+	public static final String ACTION_KEY = "ACTION";
+	public static final String OPERATION_KEY = "OPERATION";
+	public static final String CONDITION_KEY = "CONDITION";
 	
 	public static final int CREATE = 0b1;
 	public static final int READ = 0b10;
@@ -88,20 +94,19 @@ public class HLPermRule {
 		return networkAdminSystemRule;
 	}
 	
+	public static boolean isHLAccessRelation(ArchimateRelationship relation) {
+		return (relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship);
+	}
+	
 	public static HLPermRule createRule(ArchimateRelationship relation, HLModel source, HLModel target) {
 	
 		if (source instanceof Participant && target instanceof Asset && relation instanceof AccessRelationship) {
 			HLPermRule rule = new HLPermRule();
-			
 			rule.name = relation.getName();
 			rule.description = relation.getDocumentation();
 			rule.participant = source.getFullName();
 			rule.resource = target.getFullName();
-			//rule.condition = "";
-			//TODO
-			rule.operation = OPERATION_ALL;
-			rule.action = ACTION_ALLOW;
-			
+			setProperties(relation, rule);
 			return rule;
 		} else if (source instanceof Participant && target instanceof Transaction && relation instanceof AssignmentRelationship) {
 			HLPermRule rule = new HLPermRule();
@@ -110,37 +115,74 @@ public class HLPermRule {
 			rule.description = relation.getDocumentation();
 			rule.participant = source.getFullName();
 			rule.resource = target.getFullName();
-			//rule.condition = "";
-			//TODO
-			rule.operation = OPERATION_ALL;
-			rule.action = ACTION_ALLOW;
-			
+			setProperties(relation, rule);
 			return rule;
 		}
 		
 		
 		return null;
 	}
-		
-	public static String getOperation(int actions) {
-		String res = "";
-		if (check(actions, ALL))
-			return OPERATION_ALL;
-		
-		if (check(actions, CREATE))
-			res = OPERATION_CREATE + ", ";
-		
-		if (check(actions, READ))
-			res += OPERATION_READ + ", ";
-		
-		if (check(actions, UPDATE))
-			res += OPERATION_UPDATE + ", ";
-		
-		if (check(actions, DELETE))
-			res += OPERATION_DELETE + ", ";
-		
-		return res.substring(0, res.length() - 2);
+	
+	private static void setProperties(ArchimateRelationship relation, HLPermRule rule) {
+		for (IProperty prop : relation.getProperties()) {
+			String value = prop.getKey();
+			switch(value) {
+				case ACTION_KEY:
+					setAction(value.trim().toUpperCase(), rule);
+					break;
+				case OPERATION_KEY:
+					setOperation(value.trim(), rule);
+					break;
+				case CONDITION_KEY:
+					rule.condition = value;
+					break;
+			}
+		}
 	}
+	
+	private static void setOperation(String operation, HLPermRule rule) {
+		try {
+			int value = Integer.valueOf(operation);
+			rule.operation = getOperation(value);
+		} catch(Exception ex) {
+			rule.operation = OPERATION_ALL;
+		}
+	}
+
+	private static void setAction(String action, HLPermRule rule) {
+		switch(action) {
+			case ACTION_ALLOW:
+				rule.action = ACTION_ALLOW;
+				break;
+			case ACTION_DENY:
+				rule.action = ACTION_DENY;
+				break;
+			default:
+				rule.action = ACTION_ALLOW;
+				break;
+		}
+	}
+	
+	
+public static String getOperation(int actions) {
+	String res = "";
+	if (check(actions, ALL))
+		return OPERATION_ALL;
+	
+	if (check(actions, CREATE))
+		res = OPERATION_CREATE + ", ";
+	
+	if (check(actions, READ))
+		res += OPERATION_READ + ", ";
+	
+	if (check(actions, UPDATE))
+		res += OPERATION_UPDATE + ", ";
+	
+	if (check(actions, DELETE))
+		res += OPERATION_DELETE + ", ";
+	
+	return res.substring(0, res.length() - 2);
+}
 	
 	private static boolean check(int a, int... b) {
 		for (int val : b)

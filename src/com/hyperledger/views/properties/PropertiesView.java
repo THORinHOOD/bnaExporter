@@ -8,14 +8,16 @@ import javax.inject.Inject;
 import org.eclipse.jface.action.Action;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
-import org.eclipse.swt.custom.CTabItem;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.part.ViewPart;
 
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.impl.AccessRelationship;
-import com.hyperledger.views.properties.access.AccessPropertiesTab;
+import com.archimatetool.model.impl.ArchimateRelationship;
+import com.hyperledger.export.rules.HLPermRule;
+import com.hyperledger.views.properties.tabs.AccessPropertiesTab;
+import com.hyperledger.views.properties.tabs.HLTabWithConcept;
 
 public class PropertiesView extends ViewPart {
 
@@ -29,6 +31,7 @@ public class PropertiesView extends ViewPart {
 
 	private CTabFolder folder;
 	private HLSelectionHandler selectionHandler;
+	private HLPropertiesChangeHandler propertiesChangeHandler;
 	private Map<String, HLTabWithConcept> tabs;
 
 	@Override
@@ -36,6 +39,7 @@ public class PropertiesView extends ViewPart {
 		tabs = new HashMap<>();
 		folder = new CTabFolder(parent, SWT.NONE);
 		initSelectionHandler();
+		initPropertiesChangeHandler();
 		//accessPropsTab = new AccessPropertiesTab(folder);
 		
 //	    viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);	
@@ -55,15 +59,18 @@ public class PropertiesView extends ViewPart {
 	
 	private void archimateConceptSelectionHandler(Boolean isConcept, IArchimateConcept concept) {
 		if (isConcept) {
-			if (concept instanceof AccessRelationship) {
-				openAccessRelationshipTab((AccessRelationship) concept);
+			if (concept instanceof ArchimateRelationship) {
+				ArchimateRelationship relation = (ArchimateRelationship) concept;
+				if (HLPermRule.isHLAccessRelation(relation)) {
+					openAccessRelationshipTab(relation);
+				}
 			}
 		}
 	}
 	
-	private void openAccessRelationshipTab(AccessRelationship relation) {
+	private void openAccessRelationshipTab(ArchimateRelationship relation) {
 		if (!tabs.containsKey(relation.getId())) {
-			AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder);
+			AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder, propertiesChangeHandler);
 			tabs.put(relation.getId(), accessPropertiesTab);
 			accessPropertiesTab.open(relation);
 			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
@@ -77,12 +84,19 @@ public class PropertiesView extends ViewPart {
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionHandler);
 		selectionHandler.setSelectionConceptListener(this::archimateConceptSelectionHandler);
 	}
+	
+	private void initPropertiesChangeHandler() {
+		propertiesChangeHandler = new HLPropertiesChangeHandler();
+	}
 		
 	@Override
 	public void dispose() {
 		if (selectionHandler != null) {
 			getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(selectionHandler);
 			selectionHandler.dispose();
+		}
+		if (propertiesChangeHandler != null) {
+			propertiesChangeHandler.dispose();
 		}
 		super.dispose();
 	}
