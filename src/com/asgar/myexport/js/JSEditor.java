@@ -32,14 +32,18 @@ public class JSEditor extends JSEditorObject {
 		textSetScript(currentScript);
 	}
 	
-	public void saveScript() throws IOException {
+	public void saveScript() {
 		if (currentScript == null && !currentScript.exists()) 
 			return;
 		
-		BufferedWriter writer = new BufferedWriter(new FileWriter(currentScript));
-		writer.write(text.getText());
-		writer.flush();
-		writer.close();
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter(currentScript));
+			writer.write(text.getText());	
+			writer.flush();
+			writer.close();
+		} catch (IOException e) {
+			view.showError("Script saving error", "Can't save script");
+		}
 	}
 	
 	private void textSetScript(File script) {

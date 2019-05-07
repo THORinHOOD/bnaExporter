@@ -16,6 +16,23 @@ public class JSEditorMenu extends JSEditorObject {
 	
 	private ToolBar toolbar;
 	
+	private SelectionListener buildSelectionListener(Runnable onClick, String errorTitle, String errorMsg) {
+		return new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				try {
+					onClick.run();
+				} catch (Exception exception) {
+					view.showError(errorTitle, errorMsg);
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {}
+		};
+	}
+	
+	
 	public JSEditorMenu(JSEditorView view) {
 		super(view);
 		
@@ -24,64 +41,25 @@ public class JSEditorMenu extends JSEditorObject {
 		data.horizontalSpan = 2;
 		toolbar.setLayoutData(data);
 		
-		
 		ToolItem createScript = new ToolItem(toolbar, SWT.PUSH);
 		createScript.setText("create");
-		createScript.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				try {
-					createScript();
-				} catch (IOException e1) {
-					view.showError("Error creating script", "Can't create script");
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {}
-		});
-		
+		createScript.addSelectionListener(buildSelectionListener(this::createScript, "Script creation error", "Can't create script"));
+				
 		ToolItem openScript = new ToolItem(toolbar, SWT.PUSH);
 		openScript.setText("open");
-		openScript.addSelectionListener(new SelectionListener() {
-			
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				try {
-					openScript();
-				} catch (IOException e1) {
-					view.showError("Error opening script", "Can't open script");
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {}
-		});
+		openScript.addSelectionListener(buildSelectionListener(this::openScript, "Script opening error", "Can't open script"));
 		
 		ToolItem saveScript = new ToolItem(toolbar, SWT.PUSH);
 		saveScript.setText("save");
 		saveScript.setToolTipText("save");
-		saveScript.addSelectionListener(new SelectionListener() {	
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				try {
-					view.getEditor().saveScript();
-				} catch (IOException e1) {
-					view.showError("Error saving script", "Can't save script");
-				}
-			}
-			
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {}
-		});
+		saveScript.addSelectionListener(buildSelectionListener(view.getEditor()::saveScript, "Script saving error", "Can't save script"));
 		
 		ToolItem saveAsScript = new ToolItem(toolbar, SWT.PUSH);
 		saveAsScript.setText("saveAs");
 		saveAsScript.setToolTipText("saveAs");
 	}
 	
-	private void openScript() throws IOException {
+	private void openScript() {
 		FileDialog dialog = new FileDialog(Display.getCurrent().getActiveShell(), SWT.OPEN);
         dialog.setText("Open Script");
         dialog.setFilterExtensions(new String[] { "*.js" } );
@@ -93,7 +71,7 @@ public class JSEditorMenu extends JSEditorObject {
         view.getEditor().updateScript(new File(path));
 	}
 	
-	private void createScript() throws IOException {
+	private void createScript() {
 		FileDialog dialog = new FileDialog(Display.getCurrent().getActiveShell(), SWT.SAVE);
         dialog.setText("Create Script");
         dialog.setFilterExtensions(new String[] { "*.js" } );
@@ -112,11 +90,15 @@ public class JSEditorMenu extends JSEditorObject {
         	return;
         }
         
-        if (script.createNewFile()) {
-        	view.getEditor().updateScript(script);
-        } else {
-        	view.showError("Error creating script", "Can't create script");
-        }
+        try {
+			if (script.createNewFile()) {
+				view.getEditor().updateScript(script);
+			} else {
+				view.showError("Error creating script", "Can't create script");
+			}
+		} catch (IOException e) {
+			view.showError("Error creating script", "Can't create script");
+		}
 	}
 
 	@Override

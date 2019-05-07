@@ -69,7 +69,7 @@
          icon="icons/icon.png"
          id="com.hyperledger.views.properties.PropertiesView"
          inject="true"
-         name="Hyperledger Properties ">
+         name="Hyperledger ">
    </view>
 	</extension>
 

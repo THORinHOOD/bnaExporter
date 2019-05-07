@@ -13,13 +13,14 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.part.ViewPart;
 
 import com.archimatetool.model.IArchimateConcept;
-import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
+import com.archimatetool.model.impl.BusinessProcess;
 import com.hyperledger.export.rules.HLPermRule;
 import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 import com.hyperledger.export.utils.HLSelectionHandler;
 import com.hyperledger.views.properties.tabs.AccessPropertiesTab;
 import com.hyperledger.views.properties.tabs.HLTabWithConcept;
+import com.hyperledger.views.properties.tabs.ScriptsEditTab;
 
 public class HLView extends ViewPart {
 
@@ -64,23 +65,48 @@ public class HLView extends ViewPart {
 			if (concept instanceof ArchimateRelationship) {
 				ArchimateRelationship relation = (ArchimateRelationship) concept;
 				if (HLPermRule.isHLAccessRelation(relation)) {
-					openAccessRelationshipTab(relation);
+					AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder, propertiesChangeHandler);
+					openNewTab(accessPropertiesTab, concept);
 				}
+			} else if (concept instanceof BusinessProcess) {
+				ScriptsEditTab scriptsEditTab = new ScriptsEditTab(folder, propertiesChangeHandler);
+				openNewTab(scriptsEditTab, concept);
 			}
 		}
 	}
 	
-	private void openAccessRelationshipTab(ArchimateRelationship relation) {
-		if (!tabs.containsKey(relation.getId())) {
-			AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder, propertiesChangeHandler);
-			tabs.put(relation.getId(), accessPropertiesTab);
-			accessPropertiesTab.open(relation);
-			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
+	private void openNewTab(HLTabWithConcept tab, IArchimateConcept concept) {
+		if (!tabs.containsKey(concept.getId())) {
+			tabs.put(concept.getId(),tab);
+			tab.open(concept);
+			tab.addCloseListener(id -> tabs.remove(id));
 		} else {
-			folder.setSelection(tabs.get(relation.getId()).getTab());
+			folder.setSelection(tabs.get(concept.getId()).getTab());
 		}
 	}
-		
+	
+//	private void openScriptEditorTab(BusinessProcess bp) {
+//		if (!tabs.containsKey(bp.getId())) {
+//			ScriptsEditTab scriptsEditTab = new ScriptsEditTab(folder, propertiesChangeHandler);
+//			tabs.put(relation.getId(), accessPropertiesTab);
+//			accessPropertiesTab.open(relation);
+//			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
+//		} else {
+//			folder.setSelection(tabs.get(relation.getId()).getTab());
+//		}
+//	}
+//	
+//	private void openAccessRelationshipTab(ArchimateRelationship relation) {
+//		if (!tabs.containsKey(relation.getId())) {
+//			AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder, propertiesChangeHandler);
+//			tabs.put(relation.getId(), accessPropertiesTab);
+//			accessPropertiesTab.open(relation);
+//			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
+//		} else {
+//			folder.setSelection(tabs.get(relation.getId()).getTab());
+//		}
+//	}
+//		
 	private void initSelectionHandler() {
 		selectionHandler = new HLSelectionHandler();
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionHandler);
