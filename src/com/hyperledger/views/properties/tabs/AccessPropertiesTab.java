@@ -23,7 +23,7 @@ import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
 import com.hyperledger.export.rules.HLPermRule;
-import com.hyperledger.views.properties.HLPropertiesChangeHandler;
+import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 
 public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship> {
 

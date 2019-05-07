@@ -19,7 +19,7 @@
             name="Toogle JS Editor">
       </command>
       <command
-            defaultHandler="com.hyperledger.views.properties.TogglePropertiesViewHandler"
+            defaultHandler="com.hyperledger.views.TogglePropertiesViewHandler"
             id="com.hyperledger.commands.TogglePropertiesViewHandler"
             name="Toogle HL Properties">
       </command>
@@ -65,7 +65,7 @@
    </category>
    <view
          category="com.hyperledger.views"
-         class="com.hyperledger.views.properties.PropertiesView"
+         class="com.hyperledger.views.HLView"
          icon="icons/icon.png"
          id="com.hyperledger.views.properties.PropertiesView"
          inject="true"

@@ -1,4 +1,4 @@
-package com.hyperledger.views.properties;
+package com.hyperledger.views;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -10,7 +10,7 @@ public class TogglePropertiesViewHandler extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
-		ViewManager.toggleViewPart(PropertiesView.ID, true);
+		ViewManager.toggleViewPart(HLView.ID, true);
 		return null;
 	}
 

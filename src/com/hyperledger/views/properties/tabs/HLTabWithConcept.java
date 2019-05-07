@@ -15,7 +15,7 @@ import com.archimatetool.editor.model.IEditorModelManager;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.ArchimateFactory;
-import com.hyperledger.views.properties.HLPropertiesChangeHandler;
+import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 
 public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTab {
 

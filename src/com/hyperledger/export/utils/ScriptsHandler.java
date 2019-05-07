@@ -28,7 +28,7 @@ public class ScriptsHandler {
 		
 		for (Transaction tx : transactions) {
 			File script = getScript(model, tx);
-			if (script.exists())
+			if (script != null && script.exists())
 				res += scriptToText(script);
 		}
 		

@@ -5,6 +5,8 @@ import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
 import com.archimatetool.model.impl.AssignmentRelationship;
+import com.hyperledger.export.exceptions.InvalidConceptName;
+import com.hyperledger.export.exceptions.InvalidPropertyValue;
 import com.hyperledger.export.models.Asset;
 import com.hyperledger.export.models.HLModel;
 import com.hyperledger.export.models.Participant;
@@ -100,6 +102,10 @@ public class HLPermRule {
 	
 	public static HLPermRule createRule(ArchimateRelationship relation, HLModel source, HLModel target) {
 	
+		if (relation.getName().trim().equals("")) {
+			throw new InvalidConceptName(relation.getClass().getSimpleName(), relation.getName());
+		}
+		
 		if (source instanceof Participant && target instanceof Asset && relation instanceof AccessRelationship) {
 			HLPermRule rule = new HLPermRule();
 			rule.name = relation.getName();
@@ -119,25 +125,38 @@ public class HLPermRule {
 			return rule;
 		}
 		
-		
 		return null;
 	}
 	
 	private static void setProperties(ArchimateRelationship relation, HLPermRule rule) {
+		boolean setAction = false;
+		boolean setOperation = false;
+		
 		for (IProperty prop : relation.getProperties()) {
-			String value = prop.getKey();
+			String value = prop.getKey().trim().toUpperCase();
 			switch(value) {
 				case ACTION_KEY:
-					setAction(value.trim().toUpperCase(), rule);
+					setAction(prop.getValue().trim().toUpperCase(), rule);
+					setAction = true;
 					break;
 				case OPERATION_KEY:
-					setOperation(value.trim(), rule);
+					setOperation(prop.getValue().trim(), rule);
+					setOperation = true;
 					break;
 				case CONDITION_KEY:
-					rule.condition = value;
+					rule.condition = prop.getValue();
 					break;
 			}
 		}
+		
+		if (!setAction) {
+			rule.action = ACTION_ALLOW;
+		}
+		
+		if (!setOperation) {
+			rule.operation = OPERATION_ALL;
+		}
+		
 	}
 	
 	private static void setOperation(String operation, HLPermRule rule) {
@@ -145,44 +164,47 @@ public class HLPermRule {
 			int value = Integer.valueOf(operation);
 			rule.operation = getOperation(value);
 		} catch(Exception ex) {
-			rule.operation = OPERATION_ALL;
+			throw new InvalidPropertyValue(rule.name, OPERATION_KEY, operation, "Integer values");
 		}
 	}
 
 	private static void setAction(String action, HLPermRule rule) {
+		boolean set = false;
 		switch(action) {
 			case ACTION_ALLOW:
+				set = true;
 				rule.action = ACTION_ALLOW;
 				break;
 			case ACTION_DENY:
+				set = true;
 				rule.action = ACTION_DENY;
 				break;
-			default:
-				rule.action = ACTION_ALLOW;
-				break;
+		}
+		
+		if (!set) {
+			throw new InvalidPropertyValue(rule.name, ACTION_KEY, action, ACTION_ALLOW, ACTION_DENY);
 		}
 	}
 	
+	public static String getOperation(int actions) {
+		String res = "";
+		if (check(actions, ALL))
+			return OPERATION_ALL;
+		
+		if (check(actions, CREATE))
+			res = OPERATION_CREATE + ", ";
+		
+		if (check(actions, READ))
+			res += OPERATION_READ + ", ";
+		
+		if (check(actions, UPDATE))
+			res += OPERATION_UPDATE + ", ";
+		
+		if (check(actions, DELETE))
+			res += OPERATION_DELETE + ", ";
 	
-public static String getOperation(int actions) {
-	String res = "";
-	if (check(actions, ALL))
-		return OPERATION_ALL;
-	
-	if (check(actions, CREATE))
-		res = OPERATION_CREATE + ", ";
-	
-	if (check(actions, READ))
-		res += OPERATION_READ + ", ";
-	
-	if (check(actions, UPDATE))
-		res += OPERATION_UPDATE + ", ";
-	
-	if (check(actions, DELETE))
-		res += OPERATION_DELETE + ", ";
-	
-	return res.substring(0, res.length() - 2);
-}
+		return res.substring(0, res.length() - 2);
+	}
 	
 	private static boolean check(int a, int... b) {
 		for (int val : b)
@@ -198,7 +220,7 @@ public static String getOperation(int actions) {
 		res += String.format(PARTICIPANT, "", participant) + "\n";
 		res += String.format(OPERATION, operation) + "\n";
 		res += String.format(RESOURCE, "", resource) + "\n";
-		if (condition != null)
+		if (condition != null && !condition.trim().equals(""))
 			res += String.format(CONDITION, condition) + "\n";
 		res += String.format(ACTION, action) + "\n";
 		res += FOOTER + "\n";

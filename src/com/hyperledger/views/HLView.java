@@ -1,4 +1,4 @@
-package com.hyperledger.views.properties;
+package com.hyperledger.views;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,10 +16,12 @@ import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
 import com.hyperledger.export.rules.HLPermRule;
+import com.hyperledger.export.utils.HLPropertiesChangeHandler;
+import com.hyperledger.export.utils.HLSelectionHandler;
 import com.hyperledger.views.properties.tabs.AccessPropertiesTab;
 import com.hyperledger.views.properties.tabs.HLTabWithConcept;
 
-public class PropertiesView extends ViewPart {
+public class HLView extends ViewPart {
 
 	public static final String ID = "com.hyperledger.views.properties.PropertiesView";
 
