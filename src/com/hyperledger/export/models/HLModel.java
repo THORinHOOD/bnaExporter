@@ -46,16 +46,18 @@ public abstract class HLModel extends HLObject {
 		this.type = type;
 		this.identified = identified;
 		name = concept.getName();
+		documentation = concept.getDocumentation();	
 		
+		setFields(concept);
+	}
+	
+	protected void setFields(IArchimateConcept concept) throws ParseException {
 		fields = new ArrayList<HLField>();
 		for (IProperty prop : concept.getProperties())
 			fields.add(HLField.createField(this, prop, HLField.Type.PROPERTY));
 		
 		if (this.identified)
 			findIdProp();
-				
-		documentation = concept.getDocumentation();
-		
 	}
 	
 	protected void findIdProp() throws ParseException {

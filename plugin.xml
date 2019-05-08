@@ -14,11 +14,6 @@
    <extension
          point="org.eclipse.ui.commands">
       <command
-            defaultHandler="com.asgar.myexport.js.SampleHandler"
-            id="com.asgar.myexport.commands.sampleCommand"
-            name="Toogle JS Editor">
-      </command>
-      <command
             defaultHandler="com.hyperledger.views.TogglePropertiesViewHandler"
             id="com.hyperledger.commands.TogglePropertiesViewHandler"
             name="Toogle HL Properties">
@@ -32,11 +27,6 @@
          <toolbar
                id="com.asgar.myexport.toolbars.sampleToolbar">
             <command
-                  commandId="com.asgar.myexport.commands.sampleCommand"
-                  icon="icons/icon.png"
-                  id="com.asgar.myexport.toolbars.sampleCommand">
-            </command>
-            <command
                   commandId="com.hyperledger.commands.TogglePropertiesViewHandler"
                   icon="icons/icon.png"
                   id="com.hyperledger.commands.toggleToolbarProperties">
@@ -47,18 +37,6 @@
 
 	<extension
 	     point="org.eclipse.ui.views">
-	  <category
-            id="com.asgar.myexport"
-            name="Hyper Ledger">
-      </category>
-	  <view
-         category="com.asgar.myexport"
-         class="com.asgar.myexport.js.JSEditorView"
-         icon="icons/icon.png"
-         id="com.asgar.myexport.views.JSEditorView"
-         name="Script Editor"
-         restorable="true">
-	  </view>
    <category
          id="com.hyperledger.views"
          name="hl">

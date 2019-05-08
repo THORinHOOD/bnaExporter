@@ -42,22 +42,7 @@ public class HLView extends ViewPart {
 		tabs = new HashMap<>();
 		folder = new CTabFolder(parent, SWT.NONE);
 		initSelectionHandler();
-		initPropertiesChangeHandler();
-		//accessPropsTab = new AccessPropertiesTab(folder);
-		
-//	    viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);	
-//	    
-//		Table table = viewer.getTable();
-//
-//		TableColumn column = new TableColumn(table, SWT.LEFT);
-//		column.setText("Column 1");
-//		column.setWidth(100);
-//
-//		TableColumn column2 = new TableColumn(table, SWT.LEFT);
-//		column2.setText("Column 2");
-//		column2.setWidth(100);
-//
-//		table.setHeaderVisible(true);		
+		initPropertiesChangeHandler();		
 	}
 	
 	private void archimateConceptSelectionHandler(Boolean isConcept, IArchimateConcept concept) {
@@ -82,31 +67,10 @@ public class HLView extends ViewPart {
 			tab.addCloseListener(id -> tabs.remove(id));
 		} else {
 			folder.setSelection(tabs.get(concept.getId()).getTab());
+			tabs.get(concept.getId()).getTab().getControl().setFocus();
 		}
 	}
-	
-//	private void openScriptEditorTab(BusinessProcess bp) {
-//		if (!tabs.containsKey(bp.getId())) {
-//			ScriptsEditTab scriptsEditTab = new ScriptsEditTab(folder, propertiesChangeHandler);
-//			tabs.put(relation.getId(), accessPropertiesTab);
-//			accessPropertiesTab.open(relation);
-//			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
-//		} else {
-//			folder.setSelection(tabs.get(relation.getId()).getTab());
-//		}
-//	}
-//	
-//	private void openAccessRelationshipTab(ArchimateRelationship relation) {
-//		if (!tabs.containsKey(relation.getId())) {
-//			AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder, propertiesChangeHandler);
-//			tabs.put(relation.getId(), accessPropertiesTab);
-//			accessPropertiesTab.open(relation);
-//			accessPropertiesTab.addCloseListener(id -> tabs.remove(id));
-//		} else {
-//			folder.setSelection(tabs.get(relation.getId()).getTab());
-//		}
-//	}
-//		
+			
 	private void initSelectionHandler() {
 		selectionHandler = new HLSelectionHandler();
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionHandler);

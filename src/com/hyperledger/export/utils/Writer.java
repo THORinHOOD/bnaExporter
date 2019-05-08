@@ -140,13 +140,12 @@ public class Writer {
 				file.delete();
 			
 			if (file.createNewFile()) {
-				String lines =  ScriptsHandler.getScriptFile(model, transactions);
+				String lines =  ScriptsHandler.getTextFromScripts(transactions) + "\n";
 				writeFile(file, dir.getName() + ps + file.getName(), Arrays.asList(lines.split("\n")));
 			}
 		}
 		deleteDir(dir);
 	}
-	
 	
 	public void writeModels(Collection<HLModel> models) throws IOException, ParseException {
     	File dir = new File("models");

@@ -1,5 +1,6 @@
 package com.hyperledger.views.properties.tabs;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.CTabItem;
@@ -57,5 +58,18 @@ public abstract class HLTab {
 	
 	public CTabFolder getFolder() {
 		return folder;
+	}
+	
+	public void dispose() {
+		tab.dispose();
+	}
+	
+	public void showError(String title, String message) {
+		folder.getDisplay().asyncExec
+	    (new Runnable() {
+	        public void run() {
+	            MessageDialog.openWarning(folder.getShell(), title, message);
+	        }
+	    });
 	}
 }

@@ -1,17 +1,16 @@
 package com.hyperledger.views.properties.tabs;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Composite;
 
-import com.archimatetool.editor.model.IEditorModelManager;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.ArchimateFactory;
@@ -21,7 +20,7 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 
 	protected T concept;
 	protected Composite composite;
-	private HLPropertiesChangeHandler propertiesChangeHandler;
+	protected HLPropertiesChangeHandler propertiesChangeHandler;
 	
 	public HLTabWithConcept(CTabFolder folder, HLPropertiesChangeHandler propertyChangeListener, String label) {
 		super(folder, label);
@@ -64,6 +63,16 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 			}
 		} else {
 			return defaultValue;
+		}
+	}
+	
+	protected void removeProperty(String key) {
+		if (concept != null) {
+			int was = concept.getProperties().size();
+			List<IProperty> properties = concept.getProperties().stream().filter(prop -> prop.getKey().equals(key)).collect(Collectors.toList());
+			concept.getProperties().removeAll(properties);
+			if (concept.getProperties().size() - was != 0)
+				save();
 		}
 	}
 	

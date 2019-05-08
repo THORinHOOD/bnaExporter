@@ -266,8 +266,4 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 			public void widgetDefaultSelected(SelectionEvent e) {}
 		};
 	}
-	
-	public void dispose() {
-		getTab().dispose();
-	}	
 }
