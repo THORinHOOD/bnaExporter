@@ -116,25 +116,24 @@ public class BNAExporter {
      */
     private List<HLPermRule> permissionRulesProcessing(List<HLModel> models) {
     	List<HLPermRule> rules = models
-    								.stream()
-							    	.map(model -> model.getConcepts()
-							    						.stream()
-							    						.map(concept ->	concept.getSourceRelationships()
-														    					.stream()
-														    					.filter(x -> (x instanceof AccessRelationship) || (x instanceof AssignmentRelationship))
-														    					.map(x -> (ArchimateRelationship) x)
-														    					.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
-														    					.filter(x -> x != null)
-														    					.collect(Collectors.toList()))
-										    			.flatMap(List::stream)
-										    			.collect(Collectors.toList()))
-							    	.flatMap(List::stream)
-							    	.collect(Collectors.toList()); 
-    	
+			.stream()
+	    	.map(model -> model.getConcepts()
+				.stream()
+				.map(concept ->	concept.getSourceRelationships()
+					.stream()
+					.filter(x -> (x instanceof AccessRelationship) || (x instanceof AssignmentRelationship))
+					.map(x -> (ArchimateRelationship) x)
+					.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
+					.filter(x -> x != null)
+					.collect(Collectors.toList()))
+				.flatMap(List::stream)
+				.collect(Collectors.toList()))
+	    	.flatMap(List::stream)
+	    	.collect(Collectors.toList()); 
+
     	rules.add(HLPermRule.getNetworkAdminUserRule());
     	rules.add(HLPermRule.getNetworkAdminSystemRule());
     	rules.add(HLPermRule.getSystemAclRule());
-    
     	return rules;
     }
 
@@ -142,7 +141,6 @@ public class BNAExporter {
     	List<HLModel> models = collectAllModels(folder, data);
     	models = relationsProcessing(models);
     	models = participantsProcessing(models);
-    	//models = transactionsProcessing(models);
     	return models;
     }
   
@@ -170,25 +168,26 @@ public class BNAExporter {
      * На данный момент только композиция и агрегация у Asset'ов
      * @param models
      * @param concepts
-     * @return
+     * @return список hl моделей с обработанными отношениями
      */
     private List<HLModel> relationsProcessing(List<HLModel> models) {
-    	models.stream()
-    			.forEach(model -> model.getConcepts().stream().forEach(concept -> concept.getSourceRelationships()
-    						.stream()
-    						.forEach(relation -> {
-    							IArchimateConcept target = relation.getTarget();
-    							HLField field = null;
-    							if (relation instanceof CompositionRelationship) {
-    								model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY));
-    							} else if (relation instanceof AggregationRelationship) {
-    								model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
-    							} else if (relation instanceof SpecializationRelationship) {
-    								model.setSuperModel(conceptToModel.get(target));
-    							}
-    						}))
-    					);
-    	
+    	models
+    		.stream()
+			.forEach(model -> model.getConcepts().stream().forEach(concept -> concept.getSourceRelationships()
+				.stream()
+				.forEach(relation -> {
+					IArchimateConcept target = relation.getTarget();
+					HLField field = null;
+					if (relation instanceof CompositionRelationship) {
+						model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY));
+					} else if (relation instanceof AggregationRelationship) {
+						model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
+					} else if (relation instanceof SpecializationRelationship) {
+						model.setSuperModel(conceptToModel.get(target));
+					}
+				}))
+			);
+	
     	//проверка на зацикленные наследования
     	isCorrectInheritance(models);
     	
@@ -225,25 +224,7 @@ public class BNAExporter {
 		}
 		return true;
     }
- 
-    private List<HLModel> transactionsProcessing(List<HLModel> preProcessedModels) {
-    	preProcessedModels
-			.stream()
-			.filter(model -> model instanceof Transaction)
-			.map(model -> (Transaction) model)
-			.forEach(transaction -> transaction.getConcepts()
-							    					.stream()
-							    					.forEach(concept -> concept.getSourceRelationships()
-														    						.stream()
-														    						.filter(relation -> relation instanceof AccessRelationship)
-														    						.forEach(relation -> {
-														    									HLModel target = conceptToModel.get(relation.getTarget());
-														    									transaction.addField(HLField.createField(transaction, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
-														    								})));
-    	return preProcessedModels;
-    }
-    
-    
+     
     private List<HLModel> participantsProcessing(List<HLModel> preProcessedModels) {
     	
     	List<List<HLModel>> composites = preProcessedModels.stream()
@@ -291,17 +272,16 @@ public class BNAExporter {
     	
     	// проверка, что ассеты ни от кого не наследуются и не наследуют
     	boolean hasInheritance = !assets
-						    		.stream()
-						    		.allMatch(asset -> asset.getConcepts()
-						    							.stream()
-						    							.allMatch(concept -> concept.getSourceRelationships()
-						    													.stream()
-						    													.allMatch(relation -> !(relation instanceof SpecializationRelationship))
-						    												 &&
-						    												 
-						    												 concept.getTargetRelationships()
-						    												 	.stream()
-						    												 	.allMatch(relation -> !(relation instanceof SpecializationRelationship))));
+			.stream()
+			.allMatch(asset -> asset.getConcepts()
+				.stream()
+				.allMatch(concept -> concept.getSourceRelationships()
+										.stream()
+										.allMatch(relation -> !(relation instanceof SpecializationRelationship))
+									 &&
+									 concept.getTargetRelationships()
+									 	.stream()
+									 	.allMatch(relation -> !(relation instanceof SpecializationRelationship))));
     	if (hasInheritance)
     		throw new InvalidInheritanceException(participant.getFullName());
     	
