@@ -1,10 +1,17 @@
 package com.hyperledger.export.rules;
 
+import java.util.Map;
+import java.util.Optional;
+
 import com.archimatetool.model.IArchimateConcept;
+import com.archimatetool.model.IArchimateRelationship;
 import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
-import com.archimatetool.model.impl.ArchimateRelationship;
 import com.archimatetool.model.impl.AssignmentRelationship;
+import com.archimatetool.model.impl.BusinessActor;
+import com.archimatetool.model.impl.BusinessObject;
+import com.archimatetool.model.impl.BusinessProcess;
+import com.archimatetool.model.impl.BusinessRole;
 import com.hyperledger.export.exceptions.InvalidConceptName;
 import com.hyperledger.export.exceptions.InvalidPropertyValue;
 import com.hyperledger.export.models.Asset;
@@ -95,12 +102,8 @@ public class HLPermRule {
 		} 
 		return networkAdminSystemRule;
 	}
-	
-	public static boolean isHLAccessRelation(ArchimateRelationship relation) {
-		return (relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship);
-	}
-	
-	public static HLPermRule createRule(ArchimateRelationship relation, HLModel source, HLModel target) {
+
+	public static Optional<HLPermRule> createRule(IArchimateRelationship relation, HLModel source, HLModel target) {
 	
 		if (relation.getName().trim().equals("")) {
 			throw new InvalidConceptName(relation.getClass().getSimpleName(), relation.getName());
@@ -113,7 +116,7 @@ public class HLPermRule {
 			rule.participant = source.getFullName();
 			rule.resource = target.getFullName();
 			setProperties(relation, rule);
-			return rule;
+			return Optional.of(rule);
 		} else if (source instanceof Participant && target instanceof Transaction && relation instanceof AssignmentRelationship) {
 			HLPermRule rule = new HLPermRule();
 			
@@ -122,13 +125,43 @@ public class HLPermRule {
 			rule.participant = source.getFullName();
 			rule.resource = target.getFullName();
 			setProperties(relation, rule);
-			return rule;
+			return Optional.of(rule);
 		}
 		
-		return null;
+		return Optional.empty();
 	}
 	
-	private static void setProperties(ArchimateRelationship relation, HLPermRule rule) {
+	public static boolean isRule(IArchimateRelationship relation, Map<IArchimateConcept, HLModel> conceptToModel) {
+		if (!((relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship))) {
+			return false;
+		}
+		HLModel source = null;
+		HLModel target = null;
+		if (conceptToModel.containsKey(relation.getSource()))
+			source = conceptToModel.get(relation.getSource());
+		if (conceptToModel.containsKey(relation.getTarget()))
+			target = conceptToModel.get(relation.getTarget());
+		if (source == null || target == null)
+			return false;
+		return ((source instanceof Participant) || (relation.getSource() instanceof BusinessActor)) && 
+			   ((target instanceof Transaction) || (target instanceof Asset) || (target instanceof Participant) || (relation.getTarget() instanceof BusinessActor));
+	}
+	
+	public static boolean isRule(IArchimateRelationship relation) {
+		
+		if (!((relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship))) {
+			return false;
+		}
+		
+		IArchimateConcept source = relation.getSource();
+		IArchimateConcept target = relation.getTarget();
+		
+		return ((source instanceof BusinessRole) || (source instanceof BusinessActor)) && 
+			   ((target instanceof BusinessObject) || (target instanceof BusinessProcess) || (target instanceof BusinessActor));
+	
+	}
+	
+	private static void setProperties(IArchimateRelationship relation, HLPermRule rule) {
 		boolean setAction = false;
 		boolean setOperation = false;
 		

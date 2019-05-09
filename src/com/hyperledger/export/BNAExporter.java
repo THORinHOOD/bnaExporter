@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -20,11 +19,13 @@ import org.eclipse.emf.ecore.EObject;
 import com.archimatetool.model.FolderType;
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateModel;
+import com.archimatetool.model.IArchimateRelationship;
 import com.archimatetool.model.IFolder;
 import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.AggregationRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
 import com.archimatetool.model.impl.AssignmentRelationship;
+import com.archimatetool.model.impl.BusinessActor;
 import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
@@ -49,7 +50,10 @@ public class BNAExporter {
 
     private IArchimateModel model; 
 
-	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) || (x instanceof BusinessObject) || (x instanceof BusinessProcess);
+	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) ||
+											  (x instanceof BusinessObject) ||
+											  (x instanceof BusinessProcess) || 
+											  (x instanceof BusinessActor);
 		
 	private HashMap<IArchimateConcept, HLModel> conceptToModel;
 	
@@ -121,14 +125,14 @@ public class BNAExporter {
 				.stream()
 				.map(concept ->	concept.getSourceRelationships()
 					.stream()
-					.filter(x -> (x instanceof AccessRelationship) || (x instanceof AssignmentRelationship))
-					.map(x -> (ArchimateRelationship) x)
+					.filter(x -> HLPermRule.isRule(x, conceptToModel))
 					.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
-					.filter(x -> x != null)
 					.collect(Collectors.toList()))
 				.flatMap(List::stream)
 				.collect(Collectors.toList()))
 	    	.flatMap(List::stream)
+	    	.filter(x -> x.isPresent())
+			.map(x -> x.get())
 	    	.collect(Collectors.toList()); 
 
     	rules.add(HLPermRule.getNetworkAdminUserRule());

@@ -49,7 +49,7 @@ public class HLView extends ViewPart {
 		if (isConcept) {
 			if (concept instanceof ArchimateRelationship) {
 				ArchimateRelationship relation = (ArchimateRelationship) concept;
-				if (HLPermRule.isHLAccessRelation(relation)) {
+				if (HLPermRule.isRule(relation)) {
 					AccessPropertiesTab accessPropertiesTab = new AccessPropertiesTab(folder, propertiesChangeHandler);
 					openNewTab(accessPropertiesTab, concept);
 				}
