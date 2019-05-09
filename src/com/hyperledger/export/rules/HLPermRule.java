@@ -1,5 +1,7 @@
 package com.hyperledger.export.rules;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -13,6 +15,7 @@ import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
 import com.hyperledger.export.exceptions.InvalidConceptName;
+import com.hyperledger.export.exceptions.InvalidConditionVariablesNames;
 import com.hyperledger.export.exceptions.InvalidPropertyValue;
 import com.hyperledger.export.models.Asset;
 import com.hyperledger.export.models.HLModel;
@@ -24,6 +27,8 @@ public class HLPermRule {
 	public static final String ACTION_KEY = "ACTION";
 	public static final String OPERATION_KEY = "OPERATION";
 	public static final String CONDITION_KEY = "CONDITION";
+	public static final String PARTICIPANT_VARIABLE_KEY = "PARTICIPANT_VAR";
+	public static final String RESOURCE_VARIABLE_KEY = "RESOURCE_VAR";
 	
 	public static final int CREATE = 0b1;
 	public static final int READ = 0b10;
@@ -41,11 +46,11 @@ public class HLPermRule {
 	public static final String ACTION_ALLOW = "ALLOW";
 	
 	public static final String HEADER = "rule %s {";
-	public static final String DESCRIPTION = "\tdescription:  \"%s\"";
-	public static final String PARTICIPANT = "\tparticipant%s:  \"%s\"";
-	public static final String OPERATION = "\toperation:  %s";
-	public static final String RESOURCE = "\tresource%s:  \"%s\"";
-	public static final String CONDITION = "\tcondition:  %s";
+	public static final String DESCRIPTION = "\tdescription: \"%s\"";
+	public static final String PARTICIPANT = "\tparticipant%s: \"%s\"";
+	public static final String OPERATION = "\toperation: %s";
+	public static final String RESOURCE = "\tresource%s: \"%s\"";
+	public static final String CONDITION = "\tcondition: (%s)";
 	public static final String ACTION = "\taction: %s";
 	public static final String FOOTER = "}";
 	
@@ -59,7 +64,9 @@ public class HLPermRule {
 	private String resource = "";
 	private String condition;
 	private String action= "";
-		
+	private String participantVariable = "";
+	private String resourceVariable = "";
+	
 	private static HLPermRule networkAdminUserRule;
 	private static HLPermRule networkAdminSystemRule;
 	private static HLPermRule systemAclRule;
@@ -119,7 +126,6 @@ public class HLPermRule {
 			return Optional.of(rule);
 		} else if (source instanceof Participant && target instanceof Transaction && relation instanceof AssignmentRelationship) {
 			HLPermRule rule = new HLPermRule();
-			
 			rule.name = relation.getName();
 			rule.description = relation.getDocumentation();
 			rule.participant = source.getFullName();
@@ -158,7 +164,6 @@ public class HLPermRule {
 		
 		return ((source instanceof BusinessRole) || (source instanceof BusinessActor)) && 
 			   ((target instanceof BusinessObject) || (target instanceof BusinessProcess) || (target instanceof BusinessActor));
-	
 	}
 	
 	private static void setProperties(IArchimateRelationship relation, HLPermRule rule) {
@@ -177,8 +182,31 @@ public class HLPermRule {
 					setOperation = true;
 					break;
 				case CONDITION_KEY:
-					rule.condition = prop.getValue();
+					rule.condition = prop.getValue().trim();
 					break;
+				case PARTICIPANT_VARIABLE_KEY:
+					rule.participantVariable = prop.getValue().trim();
+					break;
+				case RESOURCE_VARIABLE_KEY:
+					rule.resourceVariable = prop.getValue().trim();
+					break;
+			}
+			
+			if (!setAction) {
+				throw new IllegalArgumentException("Missed access rule \""+ rule.name +"\" action property");
+			}
+			
+			if (!setOperation) {
+				throw new IllegalArgumentException("Missed access rule \""+ rule.operation +"\" action property");
+			}
+			
+			if (rule != null && !rule.condition.equals("") && (rule.participantVariable.equals("") || rule.resourceVariable.equals(""))) {
+				List<String> names = new ArrayList<>();
+				if (rule.participantVariable.equals(""))
+					names.add(rule.participantVariable);
+				if (rule.resourceVariable.equals(""))
+					names.add(rule.resourceVariable);
+				throw new InvalidConditionVariablesNames(rule.name, names.toArray(new String[names.size()]));
 			}
 		}
 		
@@ -219,6 +247,10 @@ public class HLPermRule {
 		}
 	}
 	
+	private void setVariables(HLPermRule rule, HLModel source, HLModel target) {
+		
+	}
+	
 	public static String getOperation(int actions) {
 		String res = "";
 		if (check(actions, ALL))
@@ -247,13 +279,14 @@ public class HLPermRule {
 	}
 	
 	public String getHLView() {
+		boolean haveCondition = condition != null && !condition.trim().equals("");
 		String res = "";
 		res += String.format(HEADER, name) + "\n";
 		res += String.format(DESCRIPTION, description) + "\n";
-		res += String.format(PARTICIPANT, "", participant) + "\n";
+		res += String.format(PARTICIPANT, !haveCondition ? "" : "(" + participantVariable + ")", participant) + "\n";
 		res += String.format(OPERATION, operation) + "\n";
-		res += String.format(RESOURCE, "", resource) + "\n";
-		if (condition != null && !condition.trim().equals(""))
+		res += String.format(RESOURCE, !haveCondition ? "" : "(" + resourceVariable + ")", resource) + "\n";
+		if (haveCondition)
 			res += String.format(CONDITION, condition) + "\n";
 		res += String.format(ACTION, action) + "\n";
 		res += FOOTER + "\n";

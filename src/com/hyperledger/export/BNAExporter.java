@@ -126,7 +126,9 @@ public class BNAExporter {
 				.map(concept ->	concept.getSourceRelationships()
 					.stream()
 					.filter(x -> HLPermRule.isRule(x, conceptToModel))
-					.map(access -> HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget())))
+					.map(access -> { 
+						return HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget()));
+					})
 					.collect(Collectors.toList()))
 				.flatMap(List::stream)
 				.collect(Collectors.toList()))

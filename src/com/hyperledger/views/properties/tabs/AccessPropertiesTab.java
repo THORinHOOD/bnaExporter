@@ -1,6 +1,7 @@
 package com.hyperledger.views.properties.tabs;
 
 import java.util.ArrayList;
+import java.util.function.Supplier;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
@@ -17,10 +18,10 @@ import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.forms.widgets.ColumnLayout;
 
-import com.archimatetool.model.IProperty;
-import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.ArchimateRelationship;
 import com.hyperledger.export.rules.HLPermRule;
 import com.hyperledger.export.utils.HLPropertiesChangeHandler;
@@ -28,20 +29,16 @@ import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship> {
 
 	public static final String LABEL = "Access Properties";
-			
-	private static final String ACTION_KEY = "ACTION";
-	private static final String OPERATION_KEY = "OPERATION";
-	private static final String CONDITION_KEY = "CONDITION";
-	
+
 	private final SelectionListener actionListener = new SelectionListener() {
 
 		@Override
 		public void widgetSelected(SelectionEvent e) {
 			Button btn = (Button) e.getSource();
 			if (btn.getText().equals("Allow")) {
-				setProperty(ACTION_KEY, HLPermRule.ACTION_ALLOW);
+				setProperty(HLPermRule.ACTION_KEY, HLPermRule.ACTION_ALLOW);
 			} else {
-				setProperty(ACTION_KEY, HLPermRule.ACTION_DENY);
+				setProperty(HLPermRule.ACTION_KEY, HLPermRule.ACTION_DENY);
 			}
 		}
 
@@ -87,7 +84,35 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
         
 		initAllowTypeGroup(composite);
 		initOperationsGroup(composite);
+		initVariablesGroup(composite);
 		initConditionGroup(composite);
+	}
+	
+	private void initVariablesGroup(Composite composite) {
+		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
+		
+		Group variablesGroup = new Group(composite, SWT.NULL);
+		variablesGroup.setText("Condition");
+		GridLayout gridLayout = new GridLayout();
+		gridLayout.numColumns = 2;
+		variablesGroup.setLayout(gridLayout);
+		variablesGroup.setLayoutData(gridData);
+		
+		Label participantLabel = new Label(variablesGroup, SWT.NULL);
+		participantLabel.setText("participant variable : ");
+		
+		Text participantVariable = new Text(variablesGroup, SWT.BORDER);
+		participantVariable.setLayoutData(gridData);
+		participantVariable.setText(getProperty(HLPermRule.PARTICIPANT_VARIABLE_KEY, ""));
+		participantVariable.addModifyListener(event -> setProperty(HLPermRule.PARTICIPANT_VARIABLE_KEY, participantVariable.getText()));
+		
+		Label resourceLabel = new Label(variablesGroup, SWT.NULL);
+		resourceLabel.setText("resource variable : ");
+		
+		Text resourceVariable = new Text(variablesGroup, SWT.BORDER);
+		resourceVariable.setLayoutData(gridData);
+		resourceVariable.setText(getProperty(HLPermRule.RESOURCE_VARIABLE_KEY, ""));
+		participantVariable.addModifyListener(event -> setProperty(HLPermRule.RESOURCE_VARIABLE_KEY, resourceVariable.getText()));
 	}
 	
 	private void initConditionGroup(Composite composite) {
@@ -101,18 +126,11 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		conditionText.setLayoutData(gridData);
 		conditionText.setLayout(new GridLayout());
 		
-		conditionText.setText(getProperty(CONDITION_KEY, ""));
-		conditionText.addModifyListener(new ModifyListener() {
-			
-			@Override
-			public void modifyText(ModifyEvent e) {
-				setProperty(CONDITION_KEY, conditionText.getText());
-			}
-		});
-		
+		conditionText.setText(getProperty(HLPermRule.CONDITION_KEY, ""));
+		conditionText.addModifyListener(event -> setProperty(HLPermRule.CONDITION_KEY, conditionText.getText()));	
 		conditionGroup.pack();
 	}
-	
+		
 	private void initOperationsGroup(Composite composite) {
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		Group operationsTypes = new Group(composite, SWT.NULL);
@@ -181,13 +199,13 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		all.addSelectionListener(buildOperationSelectListener(HLPermRule.ALL));
 		
 		try {
-			create.setSelection((HLPermRule.CREATE & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
-			read.setSelection((HLPermRule.READ & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
-			update.setSelection((HLPermRule.UPDATE & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
-			delete.setSelection((HLPermRule.DELETE & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) != 0);
-			all.setSelection((HLPermRule.ALL & Integer.valueOf(getProperty(OPERATION_KEY, "0"))) >= HLPermRule.ALL);
+			Integer value = Integer.valueOf(getProperty(HLPermRule.OPERATION_KEY, "0"));
+			create.setSelection((HLPermRule.CREATE & value) != 0);
+			read.setSelection((HLPermRule.READ & value) != 0);
+			update.setSelection((HLPermRule.UPDATE & value) != 0);
+			delete.setSelection((HLPermRule.DELETE & value) != 0);
+			all.setSelection((HLPermRule.ALL & value) >= HLPermRule.ALL);
 		} catch(Exception ex) {
-			//TODO
 		}
 		
 		operationsTypes.pack();
@@ -208,7 +226,7 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		allow.addSelectionListener(actionListener);
 		deny.addSelectionListener(actionListener);
 		
-		if(getProperty(ACTION_KEY, HLPermRule.ACTION_ALLOW).equals(HLPermRule.ACTION_DENY)) {
+		if(getProperty(HLPermRule.ACTION_KEY, HLPermRule.ACTION_ALLOW).equals(HLPermRule.ACTION_DENY)) {
 			allow.setSelection(false);
 			deny.setSelection(true);
 		} else {
@@ -246,18 +264,16 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 				Button btn = (Button) e.getSource();
 				if (btn.getSelection()) {
 					try {
-						int current = Integer.valueOf(getProperty(OPERATION_KEY, "0"));
-						setProperty(OPERATION_KEY, String.valueOf(current | FLAG));
+						int current = Integer.valueOf(getProperty(HLPermRule.OPERATION_KEY, "0"));
+						setProperty(HLPermRule.OPERATION_KEY, String.valueOf(current | FLAG));
 					} catch(Exception ex) {
-						//TODO
 					}
 				} else {
 					if (FLAG != HLPermRule.ALL) {
 						try {
-							int current = Integer.valueOf(getProperty(OPERATION_KEY, "0"));
-							setProperty(OPERATION_KEY, String.valueOf(current & (FLAG ^ HLPermRule.ALL) ));
+							int current = Integer.valueOf(getProperty(HLPermRule.OPERATION_KEY, "0"));
+							setProperty(HLPermRule.OPERATION_KEY, String.valueOf(current & (FLAG ^ HLPermRule.ALL) ));
 						} catch(Exception ex) {
-							//TODO
 						}
 					}
 				}
