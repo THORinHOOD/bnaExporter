@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Export Model Example
-Bundle-SymbolicName: com.asgar.myexport;singleton:=true
+Bundle-SymbolicName: com.hyperledger.exporter;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
