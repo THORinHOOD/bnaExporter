@@ -9,7 +9,7 @@ import com.archimatetool.model.IProperty;
 import com.hyperledger.export.exceptions.InvalidTypeOfIdField;
 import com.hyperledger.export.exceptions.MultipleInheritanceException;
 
-public abstract class HLModel extends HLObject {
+public abstract class HLModel extends HLObject implements HLNamed {
 	
 	public enum HLModelType {
 		PARTICIPANT, ASSET, TRANSACTION;
@@ -38,7 +38,7 @@ public abstract class HLModel extends HLObject {
 	
 	protected HLModel superModel;
 	protected boolean extendsModel = false;
-	
+
 	public HLModel(IArchimateConcept concept, HLModelType type, String namespace, boolean identified) throws ParseException {
 		super(concept);
 		

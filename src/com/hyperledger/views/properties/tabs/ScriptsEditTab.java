@@ -150,15 +150,16 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 	private void openScript(String path) {
 		setCurrentScript(path);
 		if (currentScript.isPresent()) {
-			try {
-				if (scriptEditor != null && !scriptEditor.isDisposed()) {
-					scriptEditor.setText(ScriptsHandler.scriptToText(currentScript.get()));
-					setProperty(SCRIPT_KEY, currentScript.get().getPath());
-					scriptPath.setText(currentScript.get().getPath());
+			if (scriptEditor != null && !scriptEditor.isDisposed()) {
+				Optional<String> text = ScriptsHandler.scriptToText(currentScript.get());
+				if (text.isPresent()) {
+					scriptEditor.setText(text.get());
 				} else {
 					scriptEditor.setText("");
 				}
-			} catch (IOException e) {
+				setProperty(SCRIPT_KEY, currentScript.get().getPath());
+				scriptPath.setText(currentScript.get().getPath());
+			} else {
 				scriptEditor.setText("");
 			}
 		} else {

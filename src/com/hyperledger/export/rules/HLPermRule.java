@@ -2,8 +2,8 @@ package com.hyperledger.export.rules;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateRelationship;
@@ -17,8 +17,9 @@ import com.archimatetool.model.impl.BusinessRole;
 import com.hyperledger.export.exceptions.InvalidConceptName;
 import com.hyperledger.export.exceptions.InvalidConditionVariablesNames;
 import com.hyperledger.export.exceptions.InvalidPropertyValue;
-import com.hyperledger.export.models.Asset;
 import com.hyperledger.export.models.HLModel;
+import com.hyperledger.export.models.HLModelInstance;
+import com.hyperledger.export.models.HLNamed;
 import com.hyperledger.export.models.Participant;
 import com.hyperledger.export.models.Transaction;
 
@@ -109,48 +110,56 @@ public class HLPermRule {
 		} 
 		return networkAdminSystemRule;
 	}
-
-	public static Optional<HLPermRule> createRule(IArchimateRelationship relation, HLModel source, HLModel target) {
 	
-		if (relation.getName().trim().equals("")) {
-			throw new InvalidConceptName(relation.getClass().getSimpleName(), relation.getName());
+	public static Optional<HLPermRule> createRule(IArchimateRelationship relation, Optional<HLNamed> source, Optional<HLNamed> target) {
+		if (!source.isPresent() || !target.isPresent()) {
+			return Optional.empty();
 		}
-		
-		if (source instanceof Participant && target instanceof Asset && relation instanceof AccessRelationship) {
+
+		if (checkSource(source.get()) && checkRelation(relation, target.get())) {
+			if (relation.getName().trim().equals("")) {
+				throw new InvalidConceptName(relation.getClass().getSimpleName(), relation.getName());
+			}
 			HLPermRule rule = new HLPermRule();
 			rule.name = relation.getName();
 			rule.description = relation.getDocumentation();
-			rule.participant = source.getFullName();
-			rule.resource = target.getFullName();
+			rule.participant = source.get().getFullName();
+			rule.resource = target.get().getFullName();
 			setProperties(relation, rule);
-			return Optional.of(rule);
-		} else if (source instanceof Participant && target instanceof Transaction && relation instanceof AssignmentRelationship) {
-			HLPermRule rule = new HLPermRule();
-			rule.name = relation.getName();
-			rule.description = relation.getDocumentation();
-			rule.participant = source.getFullName();
-			rule.resource = target.getFullName();
-			setProperties(relation, rule);
-			return Optional.of(rule);
-		}
-		
+			return Optional.of(rule);	
+		}		
 		return Optional.empty();
 	}
 	
-	public static boolean isRule(IArchimateRelationship relation, Map<IArchimateConcept, HLModel> conceptToModel) {
+	private static boolean checkSource(HLNamed source) {
+		if (source instanceof Participant) {
+			return true;
+		}
+		
+		if (source instanceof HLModelInstance) {
+			HLModelInstance sourceInst = (HLModelInstance) source;
+			if (sourceInst.instanceOf() instanceof Participant) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private static boolean checkRelation(IArchimateRelationship relation, HLNamed target) {
+		return (relation instanceof AccessRelationship || (relation instanceof AssignmentRelationship && target instanceof Transaction));
+	}
+	
+	public static boolean isRule(IArchimateRelationship relation, Function<IArchimateConcept, Optional<HLNamed>> conceptToHLObject) {
 		if (!((relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship))) {
 			return false;
 		}
-		HLModel source = null;
-		HLModel target = null;
-		if (conceptToModel.containsKey(relation.getSource()))
-			source = conceptToModel.get(relation.getSource());
-		if (conceptToModel.containsKey(relation.getTarget()))
-			target = conceptToModel.get(relation.getTarget());
-		if (source == null || target == null)
+		Optional source = conceptToHLObject.apply(relation.getSource());
+		Optional target = conceptToHLObject.apply(relation.getTarget());
+			
+		if (!source.isPresent() || !target.isPresent())
 			return false;
-		return ((source instanceof Participant) || (relation.getSource() instanceof BusinessActor)) && 
-			   ((target instanceof Transaction) || (target instanceof Asset) || (target instanceof Participant) || (relation.getTarget() instanceof BusinessActor));
+
+		return ((source.get() instanceof Participant) || (source.get() instanceof HLModelInstance && ((HLModelInstance)source.get()).instanceOf() instanceof Participant));
 	}
 	
 	public static boolean isRule(IArchimateRelationship relation) {
@@ -191,23 +200,6 @@ public class HLPermRule {
 					rule.resourceVariable = prop.getValue().trim();
 					break;
 			}
-			
-			if (!setAction) {
-				throw new IllegalArgumentException("Missed access rule \""+ rule.name +"\" action property");
-			}
-			
-			if (!setOperation) {
-				throw new IllegalArgumentException("Missed access rule \""+ rule.operation +"\" action property");
-			}
-			
-			if (rule != null && !rule.condition.equals("") && (rule.participantVariable.equals("") || rule.resourceVariable.equals(""))) {
-				List<String> names = new ArrayList<>();
-				if (rule.participantVariable.equals(""))
-					names.add(rule.participantVariable);
-				if (rule.resourceVariable.equals(""))
-					names.add(rule.resourceVariable);
-				throw new InvalidConditionVariablesNames(rule.name, names.toArray(new String[names.size()]));
-			}
 		}
 		
 		if (!setAction) {
@@ -217,7 +209,16 @@ public class HLPermRule {
 		if (!setOperation) {
 			rule.operation = OPERATION_ALL;
 		}
-		
+
+		if (rule.condition != null && !rule.condition.trim().equals("") && 
+		    (rule.participantVariable == null || rule.resourceVariable == null || rule.participantVariable.equals("") || rule.resourceVariable.equals(""))) {
+			List<String> names = new ArrayList<>();
+			if (rule.participantVariable.equals(""))
+				names.add(rule.participantVariable);
+			if (rule.resourceVariable.equals(""))
+				names.add(rule.resourceVariable);
+			throw new InvalidConditionVariablesNames(rule.name, names.toArray(new String[names.size()]));
+		}		
 	}
 	
 	private static void setOperation(String operation, HLPermRule rule) {
@@ -247,37 +248,26 @@ public class HLPermRule {
 		}
 	}
 	
-	private void setVariables(HLPermRule rule, HLModel source, HLModel target) {
-		
-	}
-	
 	public static String getOperation(int actions) {
 		String res = "";
-		if (check(actions, ALL))
+		if ((actions & ALL) >= ALL)
 			return OPERATION_ALL;
 		
-		if (check(actions, CREATE))
+		if ((actions & CREATE) != 0)
 			res = OPERATION_CREATE + ", ";
 		
-		if (check(actions, READ))
+		if ((actions & READ) != 0)
 			res += OPERATION_READ + ", ";
 		
-		if (check(actions, UPDATE))
+		if ((actions & UPDATE) != 0)
 			res += OPERATION_UPDATE + ", ";
 		
-		if (check(actions, DELETE))
+		if ((actions & DELETE) != 0)
 			res += OPERATION_DELETE + ", ";
 	
 		return res.substring(0, res.length() - 2);
 	}
-	
-	private static boolean check(int a, int... b) {
-		for (int val : b)
-			if ((a & val) == 0)
-				return false;
-		return true;
-	}
-	
+
 	public String getHLView() {
 		boolean haveCondition = condition != null && !condition.trim().equals("");
 		String res = "";

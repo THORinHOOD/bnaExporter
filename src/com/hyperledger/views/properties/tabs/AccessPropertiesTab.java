@@ -112,7 +112,7 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		Text resourceVariable = new Text(variablesGroup, SWT.BORDER);
 		resourceVariable.setLayoutData(gridData);
 		resourceVariable.setText(getProperty(HLPermRule.RESOURCE_VARIABLE_KEY, ""));
-		participantVariable.addModifyListener(event -> setProperty(HLPermRule.RESOURCE_VARIABLE_KEY, resourceVariable.getText()));
+		resourceVariable.addModifyListener(event -> setProperty(HLPermRule.RESOURCE_VARIABLE_KEY, resourceVariable.getText()));
 	}
 	
 	private void initConditionGroup(Composite composite) {

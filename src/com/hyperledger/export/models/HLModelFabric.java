@@ -1,6 +1,7 @@
 package com.hyperledger.export.models;
 
 import java.text.ParseException;
+import java.util.Optional;
 
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.impl.BusinessObject;
@@ -8,15 +9,19 @@ import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
 
 public class HLModelFabric {
-	public static HLModel createModel(IArchimateConcept concept, String namespace) throws ParseException {
+	public static Optional<HLModel> createModel(IArchimateConcept concept, String namespace) throws ParseException {
+		HLModel model = null;
 		if (concept instanceof BusinessRole) {
-			return new Participant(concept, namespace);
+			model = new Participant(concept, namespace);
 		} else if (concept instanceof BusinessObject) {
-			return new Asset(concept, namespace);
+			model = new Asset(concept, namespace);
 		} else if (concept instanceof BusinessProcess) {
-			return new Transaction(concept, namespace);
+			model = new Transaction(concept, namespace);
+		} 
+		if (model != null) {
+			return Optional.of(model);
 		} else {
-			throw new IllegalArgumentException("Unknown concept : " + concept.getClass());
+			return Optional.empty();
 		}
 	}
 }

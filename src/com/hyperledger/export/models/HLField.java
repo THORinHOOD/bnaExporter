@@ -31,7 +31,7 @@ public class HLField {
 			"DateTime[]",
 			"Boolean[]"
 	};
-	
+
 	public static HLField createField(HLModel model, IProperty prop, Type relation) {
 		return createField(model, prop.getKey(), prop.getValue(), relation);
 	}

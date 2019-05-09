@@ -15,6 +15,12 @@ public abstract class HLObject {
 		concepts = new ArrayList<IArchimateConcept>();
 	}
 	
+	public HLObject(HLObject object) {
+		this();
+		concepts.addAll(object.getConcepts());
+		id = object.getID();
+	}
+	
 	public HLObject(IArchimateConcept concept) {
 		this();
 		concepts.add(concept);

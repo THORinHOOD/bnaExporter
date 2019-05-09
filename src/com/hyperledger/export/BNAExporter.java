@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,10 +22,7 @@ import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IArchimateRelationship;
 import com.archimatetool.model.IFolder;
-import com.archimatetool.model.impl.AccessRelationship;
 import com.archimatetool.model.impl.AggregationRelationship;
-import com.archimatetool.model.impl.ArchimateRelationship;
-import com.archimatetool.model.impl.AssignmentRelationship;
 import com.archimatetool.model.impl.BusinessActor;
 import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
@@ -40,6 +38,8 @@ import com.hyperledger.export.models.Asset;
 import com.hyperledger.export.models.HLField;
 import com.hyperledger.export.models.HLModel;
 import com.hyperledger.export.models.HLModelFabric;
+import com.hyperledger.export.models.HLModelInstance;
+import com.hyperledger.export.models.HLNamed;
 import com.hyperledger.export.models.Participant;
 import com.hyperledger.export.models.Transaction;
 import com.hyperledger.export.rules.HLPermRule;
@@ -52,13 +52,26 @@ public class BNAExporter {
 
 	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) ||
 											  (x instanceof BusinessObject) ||
-											  (x instanceof BusinessProcess) || 
-											  (x instanceof BusinessActor);
-		
+											  (x instanceof BusinessProcess);
+	private Predicate<EObject> isInstance = x -> x instanceof BusinessActor;	
+	
 	private HashMap<IArchimateConcept, HLModel> conceptToModel;
+	private HashMap<IArchimateConcept, HLModelInstance> conceptToInstance;
+	
+	private Function<IArchimateConcept, Optional<HLNamed>> conceptToHLObject;
 	
     public BNAExporter() {
-    	conceptToModel = new HashMap<IArchimateConcept, HLModel>();
+    	conceptToModel = new HashMap<>();
+    	conceptToInstance = new HashMap<>();
+    	conceptToHLObject = concept -> {
+			if (conceptToModel.containsKey(concept)) {
+				return Optional.of(conceptToModel.get(concept));
+			}
+			if (conceptToInstance.containsKey(concept)) {
+				return Optional.of(conceptToInstance.get(concept));
+			}	
+    		return Optional.empty();
+    	};
     }
     
     public BNAExporter(IArchimateModel model) {
@@ -70,8 +83,12 @@ public class BNAExporter {
     	IFolder businessFolder = model.getFolder(FolderType.BUSINESS);
  	    IFolder relationsFolder = model.getFolder(FolderType.RELATIONS);
  	    
- 	    List<HLModel> models = generateModels(businessFolder, data);
- 		List<HLPermRule> rules = permissionRulesProcessing(models);
+    	List<EObject> list = new ArrayList<EObject>();
+    	getElements(businessFolder, list);
+ 	    
+ 	    List<HLModel> models = generateModels(list, data);
+ 	    List<HLModelInstance> instances = collectInstances(list);
+ 	    List<HLPermRule> rules = permissionRulesProcessing(models, instances);
  		
  		checkModels(models);
     	writeBNA(data, models, rules);
@@ -113,60 +130,70 @@ public class BNAExporter {
     	}
     }
             
-    /**
-     * На данный момент только доступ для participant's к asset'ам 
-     * @param models
-     * @return
-     */
-    private List<HLPermRule> permissionRulesProcessing(List<HLModel> models) {
-    	List<HLPermRule> rules = models
-			.stream()
-	    	.map(model -> model.getConcepts()
-				.stream()
-				.map(concept ->	concept.getSourceRelationships()
-					.stream()
-					.filter(x -> HLPermRule.isRule(x, conceptToModel))
-					.map(access -> { 
-						return HLPermRule.createRule(access, model, conceptToModel.get(access.getTarget()));
-					})
-					.collect(Collectors.toList()))
-				.flatMap(List::stream)
-				.collect(Collectors.toList()))
-	    	.flatMap(List::stream)
-	    	.filter(x -> x.isPresent())
-			.map(x -> x.get())
-	    	.collect(Collectors.toList()); 
-
+    private List<HLPermRule> permissionRulesProcessing(List<HLModel> models, List<HLModelInstance> instances) {
+    	Stream<IArchimateRelationship> streamModels = models
+    						.stream()
+					    	.flatMap(model -> model.getConcepts()
+			    				.stream()
+								.flatMap(concept ->	concept.getSourceRelationships()
+									.stream()
+									.filter(relation -> HLPermRule.isRule(relation, conceptToHLObject))))
+					    	.map(x -> (IArchimateRelationship) x);
+    	
+    	Stream<IArchimateRelationship> streamInstances = instances
+							.stream()
+					    	.flatMap(instance -> instance.getConcept().getSourceRelationships()
+									.stream()
+									.filter(relation -> HLPermRule.isRule(relation, conceptToHLObject)))
+					    	.map(x -> (IArchimateRelationship) x);
+    
+    	List<HLPermRule> rules = Stream.concat(streamModels, streamInstances)
+    		.map(access -> HLPermRule.createRule(access, conceptToHLObject.apply(access.getSource()), conceptToHLObject.apply(access.getTarget())))
+    		.filter(x -> x.isPresent())
+    		.map(x -> x.get())
+    		.collect(Collectors.toList());
+    	
     	rules.add(HLPermRule.getNetworkAdminUserRule());
     	rules.add(HLPermRule.getNetworkAdminSystemRule());
     	rules.add(HLPermRule.getSystemAclRule());
     	return rules;
     }
-
-    private List<HLModel> generateModels(IFolder folder, Data data) throws ParseException {    	
-    	List<HLModel> models = collectAllModels(folder, data);
+    
+    private List<HLModel> generateModels(List<EObject> allObjects, Data data) throws ParseException {
+    	List<HLModel> models = collectModels(allObjects, data);
     	models = relationsProcessing(models);
     	models = participantsProcessing(models);
     	return models;
     }
-  
-    private List<HLModel> collectAllModels(IFolder folder, Data data) throws ParseException {
-    	final String namespace = data.getStringValue(Data.NAMESPACE);
-    	
-    	List<EObject> list = new ArrayList<EObject>();
-    	getElements(folder, list);
-    	
-    	List<IArchimateConcept> correctConcepts = list.stream()
-									    			.map(x -> (IArchimateConcept) x)
-													.filter(isModel).collect(Collectors.toList());
-    	List<HLModel> models = new ArrayList<>();
-    	for (EObject object : list) {
-			if (isModel.test(object)) {
-	    		HLModel model = HLModelFabric.createModel((IArchimateConcept) object, namespace);
-	    		models.add(model);
-	    		conceptToModel.put((IArchimateConcept) object, model);
+    
+    private List<HLModelInstance> collectInstances(List<EObject> allObjects) {	
+    	List<HLModelInstance> instances = new ArrayList<>();
+    	for (EObject object : allObjects) {
+			if (isInstance.test(object)) {
+				
+	    		Optional<HLModelInstance> instance = HLModelInstance.createModelInstance(conceptToModel, (IArchimateConcept) object);
+	    		if (instance.isPresent()) {
+	    			instances.add(instance.get());
+		    		conceptToInstance.put((IArchimateConcept) object, instance.get());
+	    		}
 			}
     	}
+    	return instances;
+    }
+    
+    private List<HLModel> collectModels(List<EObject> allObjects, Data data) throws ParseException {
+    	final String namespace = data.getStringValue(Data.NAMESPACE);
+    	    	
+    	List<HLModel> models = new ArrayList<>();
+    	for (EObject object : allObjects) {
+			if (isModel.test(object)) {
+	    		Optional<HLModel> model = HLModelFabric.createModel((IArchimateConcept) object, namespace);
+	    		if (model.isPresent()) {
+		    		models.add(model.get());
+		    		conceptToModel.put((IArchimateConcept) object, model.get());
+	    		}
+			}
+    	}    	
     	return models;
     }
      

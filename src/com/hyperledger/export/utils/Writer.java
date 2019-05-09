@@ -122,7 +122,7 @@ public class Writer {
 		if (file.createNewFile()) {
 			ArrayList<String> lines = new ArrayList<String>();
 			for (HLPermRule rule : rules)
-				lines.add(rule.getHLView() + "\n");
+				lines.add(rule.getHLView());
 			writeFile(file, file.getName(), lines);
 		}
 		
@@ -140,8 +140,7 @@ public class Writer {
 				file.delete();
 			
 			if (file.createNewFile()) {
-				String lines =  ScriptsHandler.getTextFromScripts(transactions) + "\n";
-				writeFile(file, dir.getName() + ps + file.getName(), Arrays.asList(lines.split("\n")));
+				writeFile(file, dir.getName() + ps + file.getName(), ScriptsHandler.getTextFromScripts(transactions));
 			}
 		}
 		deleteDir(dir);
@@ -230,7 +229,6 @@ public class Writer {
 	    	zipOut.close();
 	    	fos.close();
     	} catch(IOException ex) {
-    		System.out.println(ex.getMessage());
     	}
     }
 }

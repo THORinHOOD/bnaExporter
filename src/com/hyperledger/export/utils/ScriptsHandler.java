@@ -14,27 +14,30 @@ import com.hyperledger.export.models.Transaction;
 
 public class ScriptsHandler {
 	
-	public static String scriptToText(File script) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(script));
-		String line;
-		String res = "";
-		while ((line = reader.readLine()) != null)
-			res += line + "\n";
-		reader.close();
-		return res;
+	public static Optional<String> scriptToText(File script) {
+		try(BufferedReader reader = new BufferedReader(new FileReader(script))) {
+			String line;
+			String res = "";
+			while ((line = reader.readLine()) != null)
+				res += line + "\n";
+			if (res.equals("")) {
+				return Optional.empty();
+			}
+			return Optional.of(res + "\n");
+		} catch(IOException exception) {
+			return Optional.empty();
+		}
 	}
 	
-	public static String getTextFromScripts(List<Transaction> transactions) throws IOException {
-		String res = "";
-		
-		for (Transaction tx : transactions) {
-			List<File> scripts = getScripts(tx);
-			for (File script : scripts)
-				if (script.exists())
-					res += scriptToText(script);
-		}
-		
-		return res;
+	public static List<String> getTextFromScripts(List<Transaction> transactions) throws IOException {
+		return transactions
+				.stream()
+				.flatMap(tx -> getScripts(tx).stream())
+				.filter(script -> script.exists())
+				.map(script -> scriptToText(script))
+				.filter(script -> script.isPresent())
+				.map(script -> script.get())
+				.collect(Collectors.toList());
 	}
 	
 	private static List<File> getScripts(Transaction tx) {

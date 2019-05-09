@@ -3,14 +3,16 @@ package com.hyperledger.export.models;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.archimatetool.model.IArchimateConcept;
-import com.archimatetool.model.IProperty;
+import com.archimatetool.model.impl.AssignmentRelationship;
+import com.archimatetool.model.impl.BusinessActor;
 
 public class Participant extends HLModel {
 	
 	private final static int rank = 1;
-	
+
 	public Participant(IArchimateConcept concept, String namespace) throws ParseException {
 		super(concept, HLModel.HLModelType.PARTICIPANT, namespace, true);
 	}
