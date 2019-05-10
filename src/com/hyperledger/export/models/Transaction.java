@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
+import com.archimatetool.model.impl.AccessRelationship;
 import com.hyperledger.export.models.HLField.Type;
 
 public class Transaction extends HLModel {
@@ -14,9 +15,13 @@ public class Transaction extends HLModel {
 	public Transaction(IArchimateConcept concept, String namespace) throws ParseException {
 		super(concept, HLModel.HLModelType.TRANSACTION, namespace, false);
 		
-		getFields()
+		concept.getSourceRelationships()
 			.stream()
-			.forEach(prop -> prop.setRelation(Type.REFER));
+			.filter(x -> x instanceof AccessRelationship)
+			.map(x -> (AccessRelationship) x)
+			.filter(x -> x.getAccessType() == AccessRelationship.READ_ACCESS)
+			.map(x -> x.getTarget())
+			.forEach(x -> fields.add(HLField.createField(this, x.getName(), x.getName().toLowerCase(), HLField.Type.REFER)));
 	}
 
 	@Override

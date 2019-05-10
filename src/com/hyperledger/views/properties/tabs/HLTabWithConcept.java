@@ -113,5 +113,5 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 	}
 	
 	protected abstract void initTab();
-	protected abstract void onConceptChanging();
+	protected abstract void onConceptChanging(boolean isRemoved);
 }

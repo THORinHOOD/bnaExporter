@@ -238,8 +238,12 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 	}
 
 	@Override
-	protected void onConceptChanging() {
-		setLabel(concept.getName());	
+	protected void onConceptChanging(boolean isRemoved) {
+		if (isRemoved) {
+			dispose();
+		} else {
+			setLabel(concept.getName());	
+		}
 	}
 	
 	private Button initCheckButton(Composite composite, String label) {
@@ -253,7 +257,6 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 	private Button initButton(Composite composite, String label, int style) {
 		Button btn = new Button(composite, style);
 		btn.setText(label);
-		btn.addFocusListener(disableFocus);
 		return btn;
 	}
 	

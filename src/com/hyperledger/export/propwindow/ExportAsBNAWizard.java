@@ -1,6 +1,8 @@
 package com.hyperledger.export.propwindow;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.ParseException;
 
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -35,7 +37,12 @@ public class ExportAsBNAWizard extends Wizard {
 		try {
 			exporter.export(data);
 		} catch (IOException | IllegalArgumentException | ParseException e) {
-			showError("Can't export BNA", e.getMessage());
+			
+			StringWriter sw = new StringWriter();
+			PrintWriter pw = new PrintWriter(sw);
+			e.printStackTrace(pw);
+			String sStackTrace = sw.toString(); // stack trace as a string
+			showError("Can't export BNA", sStackTrace);
 			return false;
 		}
 		

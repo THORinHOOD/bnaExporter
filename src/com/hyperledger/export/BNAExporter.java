@@ -28,6 +28,7 @@ import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
 import com.archimatetool.model.impl.CompositionRelationship;
+import com.archimatetool.model.impl.FlowRelationship;
 import com.archimatetool.model.impl.SpecializationRelationship;
 import com.hyperledger.export.exceptions.CycleInheritanceException;
 import com.hyperledger.export.exceptions.DuplicateObjectNames;
@@ -100,11 +101,11 @@ public class BNAExporter {
     	
 	    if (models != null)
 	    	writer.writeModels(models);
-	    writer.writeScripts(models.stream().filter(x -> x instanceof Transaction).map(x -> (Transaction) x).collect(Collectors.toList()));
-	    if (rules != null)
-	    	writer.writePermissions(rules);
-	    writer.writePackageJSON();
-		writer.writeReadme();
+//	    writer.writeScripts(models.stream().filter(x -> x instanceof Transaction).map(x -> (Transaction) x).collect(Collectors.toList()));
+//	    if (rules != null)
+//	    	writer.writePermissions(rules);
+//	    writer.writePackageJSON();
+//		writer.writeReadme();
 
 		writer.close();
     }
@@ -210,13 +211,22 @@ public class BNAExporter {
 				.stream()
 				.forEach(relation -> {
 					IArchimateConcept target = relation.getTarget();
-					HLField field = null;
 					if (relation instanceof CompositionRelationship) {
 						model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY));
 					} else if (relation instanceof AggregationRelationship) {
 						model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
 					} else if (relation instanceof SpecializationRelationship) {
 						model.setSuperModel(conceptToModel.get(target));
+					} else if (model instanceof Transaction && relation instanceof FlowRelationship) {
+						if (target instanceof BusinessProcess) {
+							Optional<HLNamed> targetEntity = conceptToHLObject.apply(target);
+							if (targetEntity.isPresent() && (targetEntity.get() instanceof Transaction)) {
+								Transaction targetTransaction = (Transaction) targetEntity.get();
+								for (HLField field : model.getFields()) {
+									targetTransaction.addField(field.copy(targetTransaction));
+								}
+							}
+						}
 					}
 				}))
 			);

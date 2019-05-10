@@ -32,6 +32,10 @@ public class HLField {
 			"Boolean[]"
 	};
 
+	public HLField copy(HLModel model) {
+		return createField(model, type, name, relation);
+	}
+	
 	public static HLField createField(HLModel model, IProperty prop, Type relation) {
 		return createField(model, prop.getKey(), prop.getValue(), relation);
 	}

@@ -63,7 +63,6 @@ public class HLView extends ViewPart {
 			tab.addCloseListener(id -> tabs.remove(id));
 		} else {
 			folder.setSelection(tabs.get(concept.getId()).getTab());
-			tabs.get(concept.getId()).getTab().getControl().setFocus();
 		}
 	}
 			

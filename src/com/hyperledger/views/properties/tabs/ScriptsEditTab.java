@@ -5,12 +5,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -19,6 +21,8 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.swt.widgets.ToolItem;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 
 import com.archimatetool.model.impl.BusinessProcess;
 import com.hyperledger.export.utils.HLPropertiesChangeHandler;
@@ -56,21 +60,23 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 	}
 	
 	private void initMenu() {
+		Function<String, Image> getImage = type -> PlatformUI.getWorkbench().getSharedImages().getImage(type);
+		
 		toolbar = new ToolBar(composite, SWT.BORDER | SWT.HORIZONTAL);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.horizontalSpan = 2;
 		toolbar.setLayoutData(data);
 		
 		ToolItem createScript = new ToolItem(toolbar, SWT.PUSH);
-		createScript.setText("create");
+		createScript.setImage(getImage.apply(ISharedImages.IMG_OBJ_FILE));
 		createScript.addSelectionListener(buildSelectionListener(this::createScript, "Script creation error", "Can't create script"));
-		
+
 		ToolItem openScript = new ToolItem(toolbar, SWT.PUSH);
-		openScript.setText("open");
+		openScript.setImage(getImage.apply(ISharedImages.IMG_OBJ_FOLDER));
 		openScript.addSelectionListener(buildSelectionListener(this::openScript, "Script opening error", "Can't open script"));
-		
+
 		ToolItem saveScript = new ToolItem(toolbar, SWT.PUSH);
-		saveScript.setText("save");
+		saveScript.setImage(getImage.apply(ISharedImages.IMG_ETOOL_SAVE_EDIT));
 		saveScript.addSelectionListener(buildSelectionListener(this::saveScript, "Script saving error", "Can't save script"));
 	}
 	
@@ -115,6 +121,10 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 	        try {
 				if (script.createNewFile()) {
 					setProperty(SCRIPT_KEY, script.getPath());
+					scriptPath.setText(script.getPath());
+					scriptPath.update();
+					scriptPath.pack(true);
+					composite.update();
 					currentScript = Optional.of(script);
 				} else {
 					showError("Error creation script", "Can't create script");
@@ -157,8 +167,11 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 				} else {
 					scriptEditor.setText("");
 				}
-				setProperty(SCRIPT_KEY, currentScript.get().getPath());
 				scriptPath.setText(currentScript.get().getPath());
+				scriptPath.update();
+				scriptPath.pack(true);
+				composite.update();
+				setProperty(SCRIPT_KEY, currentScript.get().getPath());	
 			} else {
 				scriptEditor.setText("");
 			}
@@ -199,8 +212,12 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 	}
 	
 	@Override
-	protected void onConceptChanging() {
-		setLabel(concept.getName());
+	protected void onConceptChanging(boolean isRemoved) {
+		if (isRemoved) {
+			dispose();
+		} else {
+			setLabel(concept.getName());
+		}
 	}
 
 }
