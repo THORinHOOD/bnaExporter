@@ -62,7 +62,6 @@ public class Writer {
 			file.delete();
 	}
 	
-	
 	public void writePackageJSON() throws IOException {
 		File file = new File("package.json");
 		

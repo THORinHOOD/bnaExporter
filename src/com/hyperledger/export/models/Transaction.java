@@ -2,11 +2,12 @@ package com.hyperledger.export.models;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
-import com.hyperledger.export.models.HLField.Type;
 
 public class Transaction extends HLModel {
 
@@ -20,8 +21,17 @@ public class Transaction extends HLModel {
 			.filter(x -> x instanceof AccessRelationship)
 			.map(x -> (AccessRelationship) x)
 			.filter(x -> x.getAccessType() == AccessRelationship.READ_ACCESS)
-			.map(x -> x.getTarget())
-			.forEach(x -> fields.add(HLField.createField(this, x.getName(), x.getName().toLowerCase(), HLField.Type.REFER)));
+			.forEach(relation -> {
+				List<IProperty> fields = relation.getProperties()
+													.stream()
+													.filter(prop -> prop.getKey().trim().toUpperCase().equals("REFER"))
+													.collect(Collectors.toList());
+				if (fields.size() > 0) {
+					fields.stream().forEach(field -> this.fields.add(HLField.createField(this, relation.getTarget().getName(),field.getValue(), HLField.Type.REFER)));
+				} else {
+					this.fields.add(HLField.createField(this, relation.getTarget().getName(), relation.getTarget().getName().toLowerCase(), HLField.Type.REFER));
+				}
+			});
 	}
 
 	@Override

@@ -67,6 +67,9 @@ public class HLField {
 			identifiedByThis = true;
 			this.name = this.name.replaceAll(":id", "");
 			this.type = this.type.replaceAll(":id", "");
+			if (!this.type.equals("String")) {
+				throw new IllegalArgumentException("ID property must be of type \"String\"");
+			}
 		}
 
 	}

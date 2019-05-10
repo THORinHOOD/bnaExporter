@@ -22,6 +22,7 @@ import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IArchimateRelationship;
 import com.archimatetool.model.IFolder;
+import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AggregationRelationship;
 import com.archimatetool.model.impl.BusinessActor;
 import com.archimatetool.model.impl.BusinessObject;
@@ -101,11 +102,11 @@ public class BNAExporter {
     	
 	    if (models != null)
 	    	writer.writeModels(models);
-//	    writer.writeScripts(models.stream().filter(x -> x instanceof Transaction).map(x -> (Transaction) x).collect(Collectors.toList()));
-//	    if (rules != null)
-//	    	writer.writePermissions(rules);
-//	    writer.writePackageJSON();
-//		writer.writeReadme();
+	    writer.writeScripts(models.stream().filter(x -> x instanceof Transaction).map(x -> (Transaction) x).collect(Collectors.toList()));
+	    if (rules != null)
+	    	writer.writePermissions(rules);
+	    writer.writePackageJSON();
+		writer.writeReadme();
 
 		writer.close();
     }
@@ -212,9 +213,19 @@ public class BNAExporter {
 				.forEach(relation -> {
 					IArchimateConcept target = relation.getTarget();
 					if (relation instanceof CompositionRelationship) {
-						model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY));
+						List<IProperty> fields = relation.getProperties().stream().filter(prop -> prop.getKey().trim().toUpperCase().equals("PROPERTY")).collect(Collectors.toList());
+						if (fields.size() > 0) {
+							fields.stream().forEach(prop -> model.addField(HLField.createField(model, target.getName(), prop.getValue(), HLField.Type.PROPERTY)));
+						} else {
+							model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.PROPERTY));		
+						}
 					} else if (relation instanceof AggregationRelationship) {
-						model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));
+						List<IProperty> fields = relation.getProperties().stream().filter(prop -> prop.getKey().trim().toUpperCase().equals("REFER")).collect(Collectors.toList());
+						if (fields.size() > 0) {
+							fields.stream().forEach(prop -> model.addField(HLField.createField(model, target.getName(), prop.getValue(), HLField.Type.REFER)));
+						} else {
+							model.addField(HLField.createField(model, target.getName(), target.getName().toLowerCase(), HLField.Type.REFER));		
+						}
 					} else if (relation instanceof SpecializationRelationship) {
 						model.setSuperModel(conceptToModel.get(target));
 					} else if (model instanceof Transaction && relation instanceof FlowRelationship) {
