@@ -12,8 +12,16 @@ import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
 import com.hyperledger.export.models.Transaction;
 
+/**
+ * Класс для работы со скриптами моделей
+ */
 public class ScriptsHandler {
 	
+	/**
+	 * Получение текстового представления скрипта
+	 * @param script
+	 * @return
+	 */
 	public static Optional<String> scriptToText(File script) {
 		try(BufferedReader reader = new BufferedReader(new FileReader(script))) {
 			String line;
@@ -29,6 +37,12 @@ public class ScriptsHandler {
 		}
 	}
 	
+	/**
+	 * Получить текстовое представление скриптов из транзакций
+	 * @param transactions
+	 * @return
+	 * @throws IOException
+	 */
 	public static List<String> getTextFromScripts(List<Transaction> transactions) throws IOException {
 		return transactions
 				.stream()
@@ -40,6 +54,11 @@ public class ScriptsHandler {
 				.collect(Collectors.toList());
 	}
 	
+	/**
+	 * Получить скрипты из транзакции
+	 * @param tx
+	 * @return
+	 */
 	private static List<File> getScripts(Transaction tx) {
 		return tx.getConcepts()
 					.stream()
@@ -51,6 +70,11 @@ public class ScriptsHandler {
 					.collect(Collectors.toList());
 	}
 	
+	/**
+	 * Получить скрипт из свойства
+	 * @param property
+	 * @return
+	 */
 	private static Optional<File> getScript(IProperty property) {
 		String path = property.getValue();
 		File file = new File(path);
@@ -61,6 +85,11 @@ public class ScriptsHandler {
 		}
 	}
 	
+	/**
+	 * Получить скрипты из концепции
+	 * @param concept
+	 * @return
+	 */
 	private static List<IProperty> getScriptsFromConcept(IArchimateConcept concept) {
 		return concept.getProperties().stream().filter(prop -> prop.getKey().trim().toUpperCase().equals("SCRIPT")).collect(Collectors.toList());
 	}

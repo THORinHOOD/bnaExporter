@@ -23,55 +23,96 @@ import com.hyperledger.export.models.HLNamed;
 import com.hyperledger.export.models.Participant;
 import com.hyperledger.export.models.Transaction;
 
+/**
+ * Правило доступа HyperLedger Composer
+ */
 public class HLPermRule {
 	
+	// Ключ действия
 	public static final String ACTION_KEY = "ACTION";
+	// Ключ операции
 	public static final String OPERATION_KEY = "OPERATION";
+	// Ключ условия
 	public static final String CONDITION_KEY = "CONDITION";
+	// Ключ имени переменной участника
 	public static final String PARTICIPANT_VARIABLE_KEY = "PARTICIPANT_VAR";
+	// Ключ имени переменной ресурса 
 	public static final String RESOURCE_VARIABLE_KEY = "RESOURCE_VAR";
 	
+	// Значение операции создание
 	public static final int CREATE = 0b1;
+	// Значени операции чтение
 	public static final int READ = 0b10;
+	// Значени операции обновление
 	public static final int UPDATE = 0b100;
+	// Значени операции удаление
 	public static final int DELETE = 0b1000;
+	// Значение всех операций
 	public static final int ALL = CREATE | READ | UPDATE | DELETE;
 	
+	// Текстовое представление create
 	public static final String OPERATION_CREATE = "CREATE";
+	// Текстовое представление read
 	public static final String OPERATION_READ = "READ";
+	// Текстовое представление update
 	public static final String OPERATION_UPDATE = "UPDATE";
+	// Текстовое представление delete
 	public static final String OPERATION_DELETE = "DELETE";
+	// Текстовое представление all
 	public static final String OPERATION_ALL = "ALL";
 	
+	// Текствовое представление запрета доступа
 	public static final String ACTION_DENY = "DENY";
+	// Текстовое представление разрешения доступа
 	public static final String ACTION_ALLOW = "ALLOW";
-	
+
+	// Шаблон заголовка
 	public static final String HEADER = "rule %s {";
+	// Шаблон описания
 	public static final String DESCRIPTION = "\tdescription: \"%s\"";
+	// Шаблон участника
 	public static final String PARTICIPANT = "\tparticipant%s: \"%s\"";
+	// Шаблон операции
 	public static final String OPERATION = "\toperation: %s";
+	// Шаблон ресурса
 	public static final String RESOURCE = "\tresource%s: \"%s\"";
+	// Шаблон условия
 	public static final String CONDITION = "\tcondition: (%s)";
+	// Шаблон типа доступа
 	public static final String ACTION = "\taction: %s";
+	// Закрывающяя скобка
 	public static final String FOOTER = "}";
 	
-	public static final String EQUALS = "(%s == %s)";
-	public static final String NOT_EQUALS = "(%s != %s)";
-
+	// Имя правила
 	private String name = "";
+	// Описание правила
 	private String description = "";
+	// Участник
 	private String participant = "";
+	// Операции
 	private String operation = "";
+	// Ресурс
 	private String resource = "";
+	// Условие
 	private String condition;
+	// Действие
 	private String action= "";
+	// Переменная участника
 	private String participantVariable = "";
+	// Переменная ресурса
 	private String resourceVariable = "";
 	
+	// Правило для админа сети
 	private static HLPermRule networkAdminUserRule;
+	// Правило для админа сети
 	private static HLPermRule networkAdminSystemRule;
+	// Правило сети
 	private static HLPermRule systemAclRule;
 	
+	/**
+	 * Получить правило сети
+	 * @return
+	 */
 	public static HLPermRule getSystemAclRule() {
 		if (systemAclRule == null) {
 			systemAclRule = new HLPermRule();
@@ -85,6 +126,10 @@ public class HLPermRule {
 		return systemAclRule;
 	}
 	
+	/**
+	 * Получить правило админа сети
+	 * @return
+	 */
 	public static HLPermRule getNetworkAdminUserRule() {
 		if (networkAdminUserRule == null) {
 			networkAdminUserRule = new HLPermRule();
@@ -98,6 +143,10 @@ public class HLPermRule {
 		return networkAdminUserRule;
 	}
 	
+	/**
+	 * Получить правило админа сети
+	 * @return
+	 */
 	public static HLPermRule getNetworkAdminSystemRule() {
 		if (networkAdminSystemRule == null) {
 			networkAdminSystemRule = new HLPermRule();
@@ -111,6 +160,13 @@ public class HLPermRule {
 		return networkAdminSystemRule;
 	}
 	
+	/**
+	 * Создать правило по отношению, источнику и цели
+	 * @param relation отношение
+	 * @param source источник
+	 * @param target цель
+	 * @return правило
+	 */
 	public static Optional<HLPermRule> createRule(IArchimateRelationship relation, Optional<HLNamed> source, Optional<HLNamed> target) {
 		if (!source.isPresent() || !target.isPresent()) {
 			return Optional.empty();
@@ -131,6 +187,11 @@ public class HLPermRule {
 		return Optional.empty();
 	}
 	
+	/**
+	 * Проверить источник на корректность
+	 * @param source
+	 * @return
+	 */
 	private static boolean checkSource(HLNamed source) {
 		if (source instanceof Participant) {
 			return true;
@@ -145,10 +206,22 @@ public class HLPermRule {
 		return false;
 	}
 	
+	/**
+	 * Проверить отношение на корректность
+	 * @param relation
+	 * @param target
+	 * @return
+	 */
 	private static boolean checkRelation(IArchimateRelationship relation, HLNamed target) {
 		return (relation instanceof AccessRelationship || (relation instanceof AssignmentRelationship && target instanceof Transaction));
 	}
 	
+	/**
+	 * Проверить является ли данный набор - правилом
+	 * @param relation
+	 * @param conceptToHLObject
+	 * @return
+	 */
 	public static boolean isRule(IArchimateRelationship relation, Function<IArchimateConcept, Optional<HLNamed>> conceptToHLObject) {
 		if (!((relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship))) {
 			return false;
@@ -162,6 +235,11 @@ public class HLPermRule {
 		return ((source.get() instanceof Participant) || (source.get() instanceof HLModelInstance && ((HLModelInstance)source.get()).instanceOf() instanceof Participant));
 	}
 	
+	/**
+	 * Является ли правилом
+	 * @param relation
+	 * @return
+	 */
 	public static boolean isRule(IArchimateRelationship relation) {
 		
 		if (!((relation instanceof AccessRelationship) || (relation instanceof AssignmentRelationship))) {
@@ -175,6 +253,11 @@ public class HLPermRule {
 			   ((target instanceof BusinessObject) || (target instanceof BusinessProcess) || (target instanceof BusinessActor));
 	}
 	
+	/**
+	 * Установить свойства
+	 * @param relation
+	 * @param rule
+	 */
 	private static void setProperties(IArchimateRelationship relation, HLPermRule rule) {
 		boolean setAction = false;
 		boolean setOperation = false;
@@ -221,6 +304,11 @@ public class HLPermRule {
 		}		
 	}
 	
+	/**
+	 * Установить операции
+	 * @param operation
+	 * @param rule
+	 */
 	private static void setOperation(String operation, HLPermRule rule) {
 		try {
 			int value = Integer.valueOf(operation);
@@ -230,6 +318,11 @@ public class HLPermRule {
 		}
 	}
 
+	/**
+	 * Установить тип доступа
+	 * @param action
+	 * @param rule
+	 */
 	private static void setAction(String action, HLPermRule rule) {
 		boolean set = false;
 		switch(action) {
@@ -248,6 +341,11 @@ public class HLPermRule {
 		}
 	}
 	
+	/**
+	 * Получить текстовое представление операций
+	 * @param actions
+	 * @return
+	 */
 	public static String getOperation(int actions) {
 		String res = "";
 		if ((actions & ALL) >= ALL)
@@ -268,6 +366,10 @@ public class HLPermRule {
 		return res.substring(0, res.length() - 2);
 	}
 
+	/**
+	 * Получить HyperLedger Composer представление правила
+	 * @return
+	 */
 	public String getHLView() {
 		boolean haveCondition = condition != null && !condition.trim().equals("");
 		String res = "";

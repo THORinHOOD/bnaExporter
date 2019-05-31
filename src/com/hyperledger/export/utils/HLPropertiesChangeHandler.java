@@ -16,10 +16,14 @@ import com.archimatetool.model.IFolder;
 import com.archimatetool.model.impl.ArchimateConcept;
 import com.archimatetool.model.impl.Property;
 
+/**
+ * Класс обработчик изменений концепций
+ */
 public class HLPropertiesChangeHandler {
-
+	// Обработчики событий
 	private Map<IArchimateConcept, List<Consumer<Boolean>>> changePropListeners;
 	
+	// Обработчик изменений
 	private final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
@@ -48,10 +52,11 @@ public class HLPropertiesChangeHandler {
 		IEditorModelManager.INSTANCE.addPropertyChangeListener(propertyChangeListener);
 	}
 
-	public void removedConcept(IArchimateConcept concept) {
-		
-	}
-	
+	/**
+	 * Измнение свойств какой-либо концепции
+	 * @param concept концепция
+	 * @param isRemoved удалена ли концепция
+	 */
 	public void propertyChanged(IArchimateConcept concept, boolean isRemoved) {
 		if (changePropListeners.containsKey(concept)) {
 			List<Consumer<Boolean>> conceptListeners = changePropListeners.get(concept);
@@ -61,6 +66,11 @@ public class HLPropertiesChangeHandler {
 		}
 	}
 	
+	/**
+	 * Удаление обработчика
+	 * @param concept
+	 * @param listener
+	 */
 	public void removePropertyChangeListener(IArchimateConcept concept, Consumer<Boolean> listener) {
 		if (changePropListeners.containsKey(concept)) {
 			List<Consumer<Boolean>> conceptListeners = changePropListeners.get(concept);
@@ -70,6 +80,11 @@ public class HLPropertiesChangeHandler {
 		}
 	}
 	
+	/**
+	 * Добавление обработчика
+	 * @param concept
+	 * @param listener
+	 */
 	public void addPropertyChangeListener(IArchimateConcept concept, Consumer<Boolean> listener) {
 		if (changePropListeners.containsKey(concept)) {
 			List<Consumer<Boolean>> conceptListeners = changePropListeners.get(concept);
@@ -82,6 +97,9 @@ public class HLPropertiesChangeHandler {
 		}
 	}
 	
+	/**
+	 * Удаление всех обработчиков
+	 */
 	public void dispose() {
 		changePropListeners.keySet().stream().forEach(key -> changePropListeners.get(key).clear());
 		changePropListeners.clear();

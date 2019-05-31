@@ -1,6 +1,7 @@
 package com.hyperledger.views.properties.tabs;
 
 import java.io.BufferedWriter;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -28,21 +29,33 @@ import com.archimatetool.model.impl.BusinessProcess;
 import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 import com.hyperledger.export.utils.ScriptsHandler;
 
+/**
+ * Вкладка редактора скриптов
+ */
 public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 
+	//Заголовок
 	public static final String LABEL = "JS Editor";
+	//Ключ свойства пути до скрипта
 	public static final String SCRIPT_KEY = "SCRIPT";
 	
+	//Меню
 	private ToolBar toolbar;
+	//Редактор текста
 	private StyledText scriptEditor;
+	//Путь до скрипта
 	private Label scriptPath;
 	
+	//Текущий скрипт
 	private Optional<File> currentScript = Optional.empty();
 	
 	public ScriptsEditTab(CTabFolder folder, HLPropertiesChangeHandler propertyChangeListener) {
 		super(folder, propertyChangeListener, LABEL);
 	}
 	
+	/**
+	 * Инициализация вкладки
+	 */
 	@Override
 	protected void initTab() {
 		composite = new Composite(getFolder(), SWT.NONE);
@@ -59,6 +72,9 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
         setLabel(concept.getName());
 	}
 	
+	/**
+	 * Инициализация меню
+	 */
 	private void initMenu() {
 		Function<String, Image> getImage = type -> PlatformUI.getWorkbench().getSharedImages().getImage(type);
 		
@@ -80,6 +96,9 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		saveScript.addSelectionListener(buildSelectionListener(this::saveScript, "Script saving error", "Can't save script"));
 	}
 	
+	/**
+	 * Инициализация редактора скрипта
+	 */
 	private void initScriptEditor() {
 		scriptEditor = new StyledText(composite, SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		GridData data = new GridData(GridData.FILL_BOTH);
@@ -91,6 +110,9 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		openScript(getProperty(SCRIPT_KEY));
 	}
 	
+	/**
+	 * Создание нового скрипта
+	 */
 	private void createScript() {
 		currentScript = Optional.empty();
 		scriptEditor.setText("");
@@ -98,6 +120,9 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		removeProperty(SCRIPT_KEY);
 	}
 	
+	/**
+	 * Сохранение скрипта
+	 */
 	private void saveScript() {
 		if (!currentScript.isPresent() || !currentScript.get().exists()) {
 			FileDialog dialog = new FileDialog(Display.getCurrent().getActiveShell(), SWT.SAVE);
@@ -149,6 +174,9 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		}
 	}
 	
+	/**
+	 * Открытие скрипта через диалоговое окно
+	 */
 	private void openScript() {
 		FileDialog dialog = new FileDialog(Display.getCurrent().getActiveShell(), SWT.OPEN);
         dialog.setText("Open Script");
@@ -157,6 +185,10 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
         openScript(path);
 	}
 	
+	/**
+	 * Окрытиескрипта по пути
+	 * @param path
+	 */
 	private void openScript(String path) {
 		setCurrentScript(path);
 		if (currentScript.isPresent()) {
@@ -180,6 +212,11 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		}
 	}
 	
+	/**
+	 * Установить текущий скрипт
+	 * @param path
+	 * @return
+	 */
 	private boolean setCurrentScript(String path) {
 		if (path == null) {
 			currentScript = Optional.empty();
@@ -195,6 +232,13 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		}
 	}
 		
+	/**
+	 * Создать обработчик выбора
+	 * @param onClick
+	 * @param errorTitle
+	 * @param errorMsg
+	 * @return
+	 */
 	private SelectionListener buildSelectionListener(Runnable onClick, String errorTitle, String errorMsg) {
 		return new SelectionListener() {
 			@Override
@@ -211,6 +255,9 @@ public class ScriptsEditTab extends HLTabWithConcept<BusinessProcess> {
 		};
 	}
 	
+	/**
+	 * При изменении концепции
+	 */
 	@Override
 	protected void onConceptChanging(boolean isRemoved) {
 		if (isRemoved) {

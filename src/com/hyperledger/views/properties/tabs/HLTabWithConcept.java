@@ -16,10 +16,16 @@ import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.ArchimateFactory;
 import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 
+/**
+ * Класс предок вкладки с концепцией
+ */
 public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTab {
 
+	// Концепция
 	protected T concept;
+	// Контейнер
 	protected Composite composite;
+	// Обработчик изменений концепции
 	protected HLPropertiesChangeHandler propertiesChangeHandler;
 	
 	public HLTabWithConcept(CTabFolder folder, HLPropertiesChangeHandler propertyChangeListener, String label) {
@@ -27,6 +33,10 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		this.propertiesChangeHandler = propertyChangeListener;
 	}
 
+	/**
+	 * Открытие вкладки
+	 * @param concept
+	 */
 	public void open(T concept) {
 		this.concept = concept;		
 		initTab();
@@ -35,10 +45,18 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		getTab().addDisposeListener(e -> propertiesChangeHandler.removePropertyChangeListener(this.concept, this::onConceptChanging));
 	}
 
+	/**
+	 * Закрытие вкладки
+	 */
 	public void close() {
 		closeTab();
 	}
 		
+	/**
+	 * Получить свойство по ключу
+	 * @param key
+	 * @return
+	 */
 	protected String getProperty(String key) {
 		if (concept != null) {
 			Optional<IProperty> property = concept.getProperties().stream().filter(prop -> prop.getKey().equals(key)).findFirst();
@@ -49,6 +67,12 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		return null;
 	}
 	
+	/**
+	 * Получить свойство по ключу, есил его нет, тогда вернуть по умолчанию и сохранить его
+	 * @param key
+	 * @param defaultValue
+	 * @return
+	 */
 	protected String getProperty(String key, String defaultValue) {
 		if (concept != null) {
 			Optional<IProperty> property = concept.getProperties().stream().filter(prop -> prop.getKey().equals(key)).findFirst();
@@ -66,6 +90,10 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		}
 	}
 	
+	/**
+	 * Удалить свойство
+	 * @param key
+	 */
 	protected void removeProperty(String key) {
 		if (concept != null) {
 			int was = concept.getProperties().size();
@@ -76,6 +104,11 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		}
 	}
 	
+	/**
+	 * Установить свойтсво
+	 * @param key
+	 * @param value
+	 */
 	protected void setProperty(String key, String value) {
 		if (concept != null) {
 			Optional<IProperty> property = concept.getProperties().stream().filter(prop -> prop.getKey().equals(key)).findFirst();
@@ -93,6 +126,9 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		}
 	}
 		
+	/**
+	 * Сохранить модель
+	 */
 	private void save() {
 		try {
 			concept.getArchimateModel().eResource().save(null);
@@ -101,6 +137,10 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		}
 	}
 	
+	/**
+	 * Установить обработчик закрытия вкладки
+	 * @param onClose
+	 */
 	public void addCloseListener(Consumer<String> onClose) {
 		getTab().addDisposeListener(new DisposeListener() {
 			@Override
@@ -112,6 +152,13 @@ public abstract class HLTabWithConcept<T extends IArchimateConcept> extends HLTa
 		});
 	}
 	
+	/**
+	 * Инициализция вкладки
+	 */
 	protected abstract void initTab();
+	/**
+	 * При измнении концепции
+	 * @param isRemoved
+	 */
 	protected abstract void onConceptChanging(boolean isRemoved);
 }

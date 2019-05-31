@@ -26,10 +26,15 @@ import com.archimatetool.model.impl.ArchimateRelationship;
 import com.hyperledger.export.rules.HLPermRule;
 import com.hyperledger.export.utils.HLPropertiesChangeHandler;
 
+/**
+ * Вкладка редактора настроек доступа
+ */
 public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship> {
 
+	//Заголовок
 	public static final String LABEL = "Access Properties";
 
+	//Обработчик выбора концепций
 	private final SelectionListener actionListener = new SelectionListener() {
 
 		@Override
@@ -46,6 +51,7 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		public void widgetDefaultSelected(SelectionEvent e) {}
 	};
 	
+	//Обработчик фокуса у компонент
 	private final FocusListener disableFocus = new FocusListener() {
 		@Override
 		public void focusGained(FocusEvent e) {
@@ -56,21 +62,32 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		public void focusLost(FocusEvent e) {}
 	};
 	
+	// Кнопка выбора типа доступа allow
 	private Button allow;
+	// Кнопка выбора типа доступа deny
 	private Button deny;
 	
+	// Редактор условия
 	private StyledText conditionText;
 	
+	// Кнопка выбора операции all
 	private Button all;
+	// Кнопка выбора операции create
 	private Button create;
+	// Кнопка выбора операции read
 	private Button read;
+	// Кнопка выбора операции update
 	private Button update;
+	// Кнопка выбора операции delete
 	private Button delete;
 	
 	public AccessPropertiesTab(CTabFolder folder, HLPropertiesChangeHandler propertiesChangeHandler) {
 		super(folder, propertiesChangeHandler, LABEL);
 	}
 	
+	/**
+	 * Инициализация вкладки
+	 */
 	@Override
 	protected void initTab() {
 		composite = new Composite(getFolder(), SWT.NONE);
@@ -88,11 +105,15 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		initConditionGroup(composite);
 	}
 	
+	/**
+	 * Инициализация группы для выбора имён переменных условия
+	 * @param composite
+	 */
 	private void initVariablesGroup(Composite composite) {
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		
 		Group variablesGroup = new Group(composite, SWT.NULL);
-		variablesGroup.setText("Condition");
+		variablesGroup.setText("Condition variables");
 		GridLayout gridLayout = new GridLayout();
 		gridLayout.numColumns = 2;
 		variablesGroup.setLayout(gridLayout);
@@ -115,6 +136,10 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		resourceVariable.addModifyListener(event -> setProperty(HLPermRule.RESOURCE_VARIABLE_KEY, resourceVariable.getText()));
 	}
 	
+	/**
+	 * Инициализация группы текста условия
+	 * @param composite
+	 */
 	private void initConditionGroup(Composite composite) {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		Group conditionGroup = new Group(composite, SWT.NULL);
@@ -131,6 +156,10 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		conditionGroup.pack();
 	}
 		
+	/**
+	 * Инициализация группы выбора операций
+	 * @param composite
+	 */
 	private void initOperationsGroup(Composite composite) {
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		Group operationsTypes = new Group(composite, SWT.NULL);
@@ -211,6 +240,10 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		operationsTypes.pack();
 	}
 		
+	/**
+	 * Инициализация группы выбора типа доступа
+	 * @param composite
+	 */
 	private void initAllowTypeGroup(Composite composite) {
 		GridData gridData = new GridData(GridData.FILL_HORIZONTAL);
 		Group allowType = new Group(composite, SWT.NULL);
@@ -237,6 +270,9 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		allowType.pack();
 	}
 
+	/**
+	 * При изменении концепции
+	 */
 	@Override
 	protected void onConceptChanging(boolean isRemoved) {
 		if (isRemoved) {
@@ -246,20 +282,44 @@ public class AccessPropertiesTab extends HLTabWithConcept<ArchimateRelationship>
 		}
 	}
 	
+	/**
+	 * Инициализация check button
+	 * @param composite
+	 * @param label
+	 * @return
+	 */
 	private Button initCheckButton(Composite composite, String label) {
 		return initButton(composite, label, SWT.CHECK);
 	}
 	
+	/**
+	 * 
+	 * @param composite
+	 * @param label
+	 * @return
+	 */
 	private Button initRadioButton(Composite composite, String label) {
 		return initButton(composite, label, SWT.RADIO);
 	}
 	
+	/**
+	 * Инициализация кнопки
+	 * @param composite
+	 * @param label
+	 * @param style
+	 * @return
+	 */
 	private Button initButton(Composite composite, String label, int style) {
 		Button btn = new Button(composite, style);
 		btn.setText(label);
 		return btn;
 	}
 	
+	/**
+	 * Создание обработчика выбора операции
+	 * @param FLAG
+	 * @return
+	 */
 	private SelectionListener buildOperationSelectListener(int FLAG) {
 		return new SelectionListener() {
 			@Override

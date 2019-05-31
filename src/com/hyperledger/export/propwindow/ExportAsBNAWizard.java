@@ -12,16 +12,24 @@ import com.hyperledger.export.BNAExporter;
 import com.hyperledger.export.propwindow.ExportAsBNAPage.Field;
 import com.hyperledger.export.utils.Data;
 
+/**
+ * Контроллер окна экспорта
+ */
 public class ExportAsBNAWizard extends Wizard {
 
+	//View окна экспорта
     private ExportAsBNAPage fPage;
     
+    //Экспортер
     private BNAExporter exporter;
     
     public ExportAsBNAWizard(BNAExporter exporter) {
     	this.exporter = exporter;
     }
     
+    /**
+     * При нажатии finish пользователем начинается экспорт модели
+     */
 	@Override
 	public boolean performFinish() {
 
@@ -37,12 +45,7 @@ public class ExportAsBNAWizard extends Wizard {
 		try {
 			exporter.export(data);
 		} catch (IOException | IllegalArgumentException | ParseException e) {
-			
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			e.printStackTrace(pw);
-			String sStackTrace = sw.toString(); // stack trace as a string
-			showError("Can't export BNA", sStackTrace);
+			showError("Can't export BNA", e.getMessage());
 			return false;
 		}
 		
@@ -50,12 +53,20 @@ public class ExportAsBNAWizard extends Wizard {
 		return true;
 	}
 	
+	/**
+	 * Добавить окно
+	 */
 	@Override
     public void addPages() {
         fPage = new ExportAsBNAPage(exporter.getModel());
         addPage(fPage);
     }
 	
+	/**
+	 * Показать ошибку пользователю
+	 * @param title заголовок
+	 * @param message сообщение
+	 */
 	private void showError(String title, String message) {
 		getShell().getDisplay().asyncExec
 	    (new Runnable() {
@@ -65,6 +76,11 @@ public class ExportAsBNAWizard extends Wizard {
 	    });
 	}
 
+	/**
+	 * Показать сообщение ползователю
+	 * @param title заголовок
+	 * @param message сообщение
+	 */
 	private void showConfirm(String title, String message) {
 		getShell().getDisplay().asyncExec
 	    (new Runnable() {

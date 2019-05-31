@@ -1,8 +1,3 @@
-/**
- * This program and the accompanying materials
- * are made available under the terms of the License
- * which accompanies this distribution in the file LICENSE.txt
- */
 package com.hyperledger.export;
 
 import java.io.File;
@@ -42,13 +37,20 @@ import com.archimatetool.model.impl.ArchimateDiagramModel;
 import com.archimatetool.model.impl.BusinessRole;
 import com.hyperledger.export.propwindow.ExportAsBNAWizard;
 
+/**
+ * Основной класс экспорта, точка входа
+ */
 public class Main implements IModelExporter {
     
     public Main() {
     }
-        
+    
+    /**
+     * Метод экспорта archimate модели
+     */
     @Override
-    public void export(IArchimateModel model) throws IOException, IllegalArgumentException {
+    public void export(IArchimateModel model) 
+    		throws IOException, IllegalArgumentException {
     	BNAExporter exporter = new BNAExporter(model);
     	ExportAsBNAWizard wizard = new ExportAsBNAWizard(exporter);
     	WizardDialog dialog = new ExtendedWizardDialog(Display.getCurrent().getActiveShell(), new ExportAsBNAWizard(new BNAExporter(model)), "ExportAsBNAWizard");

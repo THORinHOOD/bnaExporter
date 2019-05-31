@@ -11,11 +11,19 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import com.archimatetool.model.IArchimateConcept;
 
+/**
+ * Обработчик выбора
+ */
 public class HLSelectionHandler implements ISelectionListener {
 	
+	// Выбранная концепция
 	private IArchimateConcept selected;
+	// Обработчик выбора концепции
 	private BiConsumer selectionConceptsListener;
 	
+	/**
+	 * Изменения выбора концепции
+	 */
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 		if (selection == null)
@@ -34,6 +42,10 @@ public class HLSelectionHandler implements ISelectionListener {
 		}
 	}
 	
+	/**
+	 * Установка текущей выбранной концепции
+	 * @param concept
+	 */
 	private void handleArchimateConcept(IArchimateConcept concept) {
 		if (concept == null) {
 			selectedNewConceptEvent(false, concept);
@@ -43,15 +55,27 @@ public class HLSelectionHandler implements ISelectionListener {
 		selectedNewConceptEvent(true, selected);
 	}
 	
+	/**
+	 * Установка обработчика
+	 * @param listener
+	 */
 	public void setSelectionConceptListener(BiConsumer<Boolean, IArchimateConcept> listener) {
 		selectionConceptsListener = listener;
 	}
 
+	/**
+	 * Событие выбора другой концепции
+	 * @param selectedConcept
+	 * @param concept
+	 */
 	public void selectedNewConceptEvent(Boolean selectedConcept, IArchimateConcept concept) {
 		if (selectionConceptsListener != null)
 			selectionConceptsListener.accept(selectedConcept, concept);
 	}
 	
+	/**
+	 * Удаление обработчиков
+	 */
 	public void dispose() {
 		selectionConceptsListener = null;
 	}

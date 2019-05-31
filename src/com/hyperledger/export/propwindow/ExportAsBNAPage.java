@@ -11,6 +11,9 @@ import org.eclipse.swt.widgets.Text;
 import com.archimatetool.model.IArchimateModel;
 import com.archimatetool.model.IProperty;
 
+/**
+ * View окна экспорта
+ */
 public class ExportAsBNAPage extends WizardPage {
 
 	public enum Field {
@@ -48,6 +51,7 @@ public class ExportAsBNAPage extends WizardPage {
 		}
 	};
 	
+	//Archimate модель
 	private IArchimateModel model;
 	
 	public ExportAsBNAPage(IArchimateModel model) {
@@ -59,6 +63,9 @@ public class ExportAsBNAPage extends WizardPage {
 		this.model = model;
 	}
 
+	/**
+	 * Создание view окна
+	 */
 	@Override
 	public void createControl(Composite parent) {
 		Composite container = new Composite(parent, SWT.NULL);
@@ -93,6 +100,12 @@ public class ExportAsBNAPage extends WizardPage {
         setTitle("Export BNA");
 	}
 	
+	/**
+	 * Добавить поле для ввода
+	 * @param container родительский контейнер
+	 * @param gd данные для layout
+	 * @param field поле
+	 */
 	private void addField(Composite container, GridData gd, Field field) {
 		Label label = new Label(container, SWT.READ_ONLY);
         label.setText(field.toString());

@@ -10,10 +10,17 @@ import org.eclipse.swt.widgets.TabItem;
 
 import com.archimatetool.model.IArchimateConcept;
 
+/**
+ * Класс предок вкладки
+ */
 public abstract class HLTab {
+	// Вкладка
 	private CTabItem tab;
+	// Заголовок
 	private String label;
+	// Папка, в которой находится вкладка
 	private CTabFolder folder;
+	// Открыта ли вкладка
 	private Boolean isOpened;
 	
 	public HLTab(CTabFolder folder, String label) {
@@ -22,6 +29,10 @@ public abstract class HLTab {
 		isOpened = false;
 	}
 			
+	/**
+	 * Открытие вкладки
+	 * @param control
+	 */
 	protected void openTab(Composite control) {
 		if (!isOpened) {
 			tab = new CTabItem(folder, SWT.NONE);
@@ -32,6 +43,9 @@ public abstract class HLTab {
 		}
 	}
 	
+	/**
+	 * Закрытие вкладки
+	 */
 	protected void closeTab() {
 		if (isOpened) {
 			tab.dispose();
@@ -39,6 +53,10 @@ public abstract class HLTab {
 		}
 	}
 	
+	/**
+	 * Установление текста заголовка
+	 * @param label
+	 */
 	public void setLabel(String label) {
 		if (label.trim().equals("")) {
 			label = "(Unknown)";
@@ -48,22 +66,42 @@ public abstract class HLTab {
 			tab.setText(label);
 	}
 	
+	/**
+	 * Получить текст заголовка
+	 * @return
+	 */
 	public String getLabel() {
 		return label;
 	}
 	
+	/**
+	 * Получить вкладку
+	 * @return
+	 */
 	public CTabItem getTab() {
 		return tab;
 	}
 	
+	/**
+	 * Получить папку
+	 * @return
+	 */
 	public CTabFolder getFolder() {
 		return folder;
 	}
 	
+	/**
+	 * Уничтожение вкладки
+	 */
 	public void dispose() {
 		tab.dispose();
 	}
 	
+	/**
+	 * Показать пользователю сообщение об ошибке
+	 * @param title
+	 * @param message
+	 */
 	public void showError(String title, String message) {
 		folder.getDisplay().asyncExec
 	    (new Runnable() {

@@ -27,17 +27,27 @@ import com.hyperledger.export.models.HLObject;
 import com.hyperledger.export.models.Transaction;
 import com.hyperledger.export.rules.HLPermRule;
 
+/**
+ * Класс для работы с файлами
+ */
 public class Writer {
 	
-    String MY_EXTENSION = ".bna";
-    String MY_EXTENSION_WILDCARD = "*.bna"; 
+	//Расширение артефакта
+    private String MY_EXTENSION = ".bna";
+    //Regexp для артефактов
+    private String MY_EXTENSION_WILDCARD = "*.bna"; 
     
-    FileOutputStream fos;
-    ZipOutputStream zipOut;
+    //Поток вывода
+    private FileOutputStream fos;
+    //Поток вывода для архива
+    private ZipOutputStream zipOut;
     
-    String ps = File.separatorChar + "";
+    // Символ сепаратора системы
+    private String ps = File.separatorChar + "";
     
+    //Дополнительные данные сети
 	private Data data;
+	//Модель, которую требуется экспортировать
 	private IArchimateModel model;
 	
 	public Writer(IArchimateModel model, Data data) {
@@ -45,7 +55,13 @@ public class Writer {
 		this.model = model;
 	}
 	
-	public void writeReadme() throws FileNotFoundException, IOException {
+	/**
+	 * Запись README.md файла
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	public void writeReadme() 
+			throws FileNotFoundException, IOException {
 		File file = new File("README.md");
 		
 		if (file.exists())
@@ -62,6 +78,10 @@ public class Writer {
 			file.delete();
 	}
 	
+	/**
+	 * Запись package.json файла
+	 * @throws IOException
+	 */
 	public void writePackageJSON() throws IOException {
 		File file = new File("package.json");
 		
@@ -112,6 +132,11 @@ public class Writer {
 			file.delete();
 	}
 	
+	/**
+	 * Запись прав доступа (файла premissions.acl)
+	 * @param rules
+	 * @throws IOException
+	 */
 	public void writePermissions(List<HLPermRule> rules) throws IOException {
 		File file = new File("permissions.acl");
 		
@@ -129,6 +154,11 @@ public class Writer {
 			file.delete();
 	}
 	
+	/**
+	 * Запись скриптов в файл logic.js
+	 * @param transactions
+	 * @throws IOException
+	 */
 	public void writeScripts(List<Transaction> transactions) throws IOException {
 		File dir = new File("lib");
 		deleteDir(dir);
@@ -145,6 +175,12 @@ public class Writer {
 		deleteDir(dir);
 	}
 	
+	/**
+	 * Запись моделей в файл <namespace>.cto
+	 * @param models
+	 * @throws IOException
+	 * @throws ParseException
+	 */
 	public void writeModels(Collection<HLModel> models) throws IOException, ParseException {
     	File dir = new File("models");
     	deleteDir(dir);
@@ -171,6 +207,13 @@ public class Writer {
     	deleteDir(dir);
     }
 	
+	/**
+	 * Запись файла
+	 * @param file
+	 * @param pathInZip
+	 * @param lines
+	 * @throws IOException
+	 */
 	private void writeFile(File file, String pathInZip, List<String> lines) throws IOException {
 		byte[] buffer = new byte[1024];
 		
@@ -188,6 +231,11 @@ public class Writer {
 		}
 	}
 	
+	/**
+	 * Удаление папки
+	 * @param dir
+	 * @return
+	 */
     private static boolean deleteDir(File dir) {
     	if (!dir.exists() || !dir.isDirectory())
     		return dir.delete();
@@ -203,6 +251,10 @@ public class Writer {
         return dir.delete(); // The directory is empty now and can be deleted.
     }
     
+    /**
+     * Начало записи
+     * @throws FileNotFoundException
+     */
     public void start() throws FileNotFoundException {
         FileDialog dialog = new FileDialog(Display.getCurrent().getActiveShell(), SWT.SAVE);
         dialog.setText(Messages.MyExporter_0);
@@ -223,6 +275,9 @@ public class Writer {
         return;
     }
     
+    /**
+     * Завершение записи
+     */
     public void close() {
     	try {
 	    	zipOut.close();

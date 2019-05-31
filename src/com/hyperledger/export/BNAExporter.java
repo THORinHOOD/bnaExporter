@@ -48,18 +48,26 @@ import com.hyperledger.export.rules.HLPermRule;
 import com.hyperledger.export.utils.Data;
 import com.hyperledger.export.utils.Writer;
 
+/**
+ * Основной класс экспорта модели
+ * В этом классе вся основная логика сопоставления сущностей
+ */
 public class BNAExporter {
 
+	//Модель, которую требуется экспортировать
     private IArchimateModel model; 
-
+    //Предикат для проверки концепции на то, что она является моделью
 	private Predicate<EObject> isModel = x -> (x instanceof BusinessRole) ||
 											  (x instanceof BusinessObject) ||
 											  (x instanceof BusinessProcess);
+	
+	//Предикат для проверки концепции на то, что она является экземпляром
 	private Predicate<EObject> isInstance = x -> x instanceof BusinessActor;	
-	
+	//Словарь соответствия между концепцией и моделью
 	private HashMap<IArchimateConcept, HLModel> conceptToModel;
+	//Словарь соответствия между концепцией и экземпляром
 	private HashMap<IArchimateConcept, HLModelInstance> conceptToInstance;
-	
+	//Функция получения модели или экземпляра по концепции
 	private Function<IArchimateConcept, Optional<HLNamed>> conceptToHLObject;
 	
     public BNAExporter() {
@@ -81,7 +89,14 @@ public class BNAExporter {
     	this.model = model;
     }
         
-    public void export(Data data) throws IOException, ParseException {
+    /**
+     * Метод экспорта модели
+     * @param data дополнительные данные
+     * @throws IOException
+     * @throws ParseException
+     */
+    public void export(Data data) 
+    		throws IOException, ParseException {
     	IFolder businessFolder = model.getFolder(FolderType.BUSINESS);
  	    IFolder relationsFolder = model.getFolder(FolderType.RELATIONS);
  	    
@@ -96,7 +111,16 @@ public class BNAExporter {
     	writeBNA(data, models, rules);
     }
     
-    private void writeBNA(Data data, List<HLModel> models, List<HLPermRule> rules) throws IOException, ParseException {
+    /**
+     * Метод записи полученных данных в архив
+     * @param data дополнительные данные
+     * @param models модели
+     * @param rules правила доступа
+     * @throws IOException
+     * @throws ParseException
+     */
+    private void writeBNA(Data data, List<HLModel> models, List<HLPermRule> rules) 
+    		throws IOException, ParseException {
     	Writer writer = new Writer(model, data);
 	    writer.start();
     	
@@ -111,6 +135,10 @@ public class BNAExporter {
 		writer.close();
     }
         
+    /**
+     * Проверка полей моделей
+     * @param models
+     */
     private void checkModels(Collection<HLModel> models) { 	
     	Set<String> names = new HashSet<>();
     	for (HLModel model : models) {
@@ -132,6 +160,12 @@ public class BNAExporter {
     	}
     }
             
+    /**
+     * Процессинг отношений доступа
+     * @param models модели
+     * @param instances экземпляры
+     * @return правила доступа
+     */
     private List<HLPermRule> permissionRulesProcessing(List<HLModel> models, List<HLModelInstance> instances) {
     	Stream<IArchimateRelationship> streamModels = models
     						.stream()
@@ -161,6 +195,13 @@ public class BNAExporter {
     	return rules;
     }
     
+    /**
+     * Генерация моделей
+     * @param allObjects все объекты модели archimate
+     * @param data дополнительные данные
+     * @return модели
+     * @throws ParseException
+     */
     private List<HLModel> generateModels(List<EObject> allObjects, Data data) throws ParseException {
     	List<HLModel> models = collectModels(allObjects, data);
     	models = relationsProcessing(models);
@@ -168,6 +209,11 @@ public class BNAExporter {
     	return models;
     }
     
+    /**
+     * Генерация экземпляров моделей
+     * @param allObjects все объекты модели archimate
+     * @return экземпляры
+     */
     private List<HLModelInstance> collectInstances(List<EObject> allObjects) {	
     	List<HLModelInstance> instances = new ArrayList<>();
     	for (EObject object : allObjects) {
@@ -183,6 +229,13 @@ public class BNAExporter {
     	return instances;
     }
     
+    /**
+     * Первичная генерация моделей из концепций
+     * @param allObjects все концепции модели archimate
+     * @param data дополнительные данные
+     * @return сгенерированные модели
+     * @throws ParseException
+     */
     private List<HLModel> collectModels(List<EObject> allObjects, Data data) throws ParseException {
     	final String namespace = data.getStringValue(Data.NAMESPACE);
     	    	
@@ -200,9 +253,8 @@ public class BNAExporter {
     }
      
     /**
-     * На данный момент только композиция и агрегация у Asset'ов
-     * @param models
-     * @param concepts
+     * Процессинг отношений моделей
+     * @param models модели
      * @return список hl моделей с обработанными отношениями
      */
     private List<HLModel> relationsProcessing(List<HLModel> models) {
@@ -241,13 +293,17 @@ public class BNAExporter {
 					}
 				}))
 			);
-	
+    	
     	//проверка на зацикленные наследования
-    	isCorrectInheritance(models);
+    	isCorrectInheritance(models); 
     	
     	return models;
     }   
     
+    /**
+     * Проверка на зацикленные наследования
+     * @param models модели
+     */
     private void isCorrectInheritance(List<HLModel> models) {
     	Map<HLModel, Integer> was = models
 							    		.stream()
@@ -264,6 +320,12 @@ public class BNAExporter {
     		});
     }
     
+    /**
+     * Дфс для проверки на зацикленные наследования
+     * @param was в каких моделях был метод
+     * @param current текущая модель
+     * @return корректность
+     */
     private boolean inheritanceChecker(Map<HLModel, Integer> was, HLModel current) {
     	if (current == null || was.get(current) == 2)
     		return true;
@@ -279,13 +341,18 @@ public class BNAExporter {
 		return true;
     }
      
+    /**
+     * Процессинг участников (participant)
+     * @param preProcessedModels первичные модели
+     * @return модели, содержащие участников
+     */
     private List<HLModel> participantsProcessing(List<HLModel> preProcessedModels) {
     	
     	List<List<HLModel>> composites = preProcessedModels.stream()
-    		.filter(x -> (x instanceof Participant) || (x instanceof Asset)) // select Participants and Assets
-    		.collect(Collectors.groupingBy(x -> x.getName())) // group them by names
+    		.filter(x -> (x instanceof Participant) || (x instanceof Asset)) // выбираем участников и ресурсы
+    		.collect(Collectors.groupingBy(x -> x.getName())) // группируем их по имени
     		.values().stream() 
-    		.filter(list -> list.size() > 1) // select only composite Participants
+    		.filter(list -> list.size() > 1) // выбираем только участников композиции
     		.collect(Collectors.toList());
     	
     	List<HLModel> builtParticipants = composites.stream()
@@ -301,6 +368,11 @@ public class BNAExporter {
     	return Stream.concat(remainder.stream(), builtParticipants.stream()).collect(Collectors.toList());
     }
     
+    /**
+     * Сборка участника (participant)
+     * @param models модели
+     * @return участник
+     */
     private Optional<HLModel> buildParticipant(List<HLModel> models) {
     	List<Participant> candidates = models.stream()
 								    		.filter(x -> (x instanceof Participant))
@@ -347,6 +419,11 @@ public class BNAExporter {
     	return Optional.of(participant);
     }
         
+    /**
+     * получить все элементы модели archimate из папки
+     * @param folder папка
+     * @param list список, в который нужно записать объекты
+     */
     private void getElements(IFolder folder, List<EObject> list) {
         for(EObject object : folder.getElements()) {
             list.add(object);
@@ -357,6 +434,10 @@ public class BNAExporter {
         }
     }
     
+    /**
+     * Получить модель archimate
+     * @return модель archimate
+     */
     public IArchimateModel getModel() {
     	return model;
     }

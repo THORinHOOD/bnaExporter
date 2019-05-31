@@ -9,8 +9,12 @@ import com.archimatetool.model.IArchimateConcept;
 import com.archimatetool.model.IProperty;
 import com.archimatetool.model.impl.AccessRelationship;
 
+/**
+ * Класс модели транзакции
+ */
 public class Transaction extends HLModel {
 
+	//Ранг модели для сортировки
 	private final static int rank = 3;
 	
 	public Transaction(IArchimateConcept concept, String namespace) throws ParseException {
@@ -34,6 +38,9 @@ public class Transaction extends HLModel {
 			});
 	}
 
+	/**
+	 * Установить поля для транзакции с учетом игнорирования некоторых полей
+	 */
 	@Override
 	protected void setFields(IArchimateConcept concept) throws ParseException {
 		fields = new ArrayList<HLField>();
@@ -42,6 +49,9 @@ public class Transaction extends HLModel {
 				fields.add(HLField.createField(this, prop, HLField.Type.PROPERTY));
 	}
 	
+	/**
+	 * Получить ранг модели   
+	 */
 	@Override
 	public int getRank() {
 		return rank;

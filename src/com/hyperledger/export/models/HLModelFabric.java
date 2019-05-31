@@ -8,7 +8,18 @@ import com.archimatetool.model.impl.BusinessObject;
 import com.archimatetool.model.impl.BusinessProcess;
 import com.archimatetool.model.impl.BusinessRole;
 
+/**
+ * Фабрика для создания классов моделей по концепции
+ */
 public class HLModelFabric {
+	
+	/**
+	 * Создание модели на основе концепции
+	 * @param concept концепция
+	 * @param namespace пространство имён
+	 * @return модель
+	 * @throws ParseException
+	 */
 	public static Optional<HLModel> createModel(IArchimateConcept concept, String namespace) throws ParseException {
 		HLModel model = null;
 		if (concept instanceof BusinessRole) {
